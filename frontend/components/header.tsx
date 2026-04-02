@@ -1,52 +1,55 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React from 'react'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Colors, Typography } from '@/constants/theme'
+import { Ionicons } from '@expo/vector-icons'
+
 
 const Header = () => {
+    const insets = useSafeAreaInsets();
     return (
-        <SafeAreaView style={styles.container}>
 
-            <View>
-                <Text style={styles.logo}>Transit</Text>
+
+        <View style={[styles.topBar, { top: Math.max(insets.top, 20) }]}>
+            <View style={styles.topBarContent}>
+                <Text style={styles.brandName}>Transit</Text>
+                <TouchableOpacity style={styles.avatarButton}>
+                    <Ionicons name="person" size={18} color={Colors.textSecondary} />
+                </TouchableOpacity>
             </View>
+        </View>
 
-            <View style={styles.right}>
-                <View>
-                    <Text>header</Text>
-                </View>
-                <View>
-                    <Text>header</Text>
-                </View>
-            </View>
 
-        </SafeAreaView>
     )
 }
 
 export default Header
 
 const styles = StyleSheet.create({
-    container: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        paddingHorizontal: 16,
-        paddingVertical: 4,
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 100,
-        backgroundColor: "#fff",
+    topBar: {
+        position: 'absolute',
+        left: 24,
+        right: 24,
+        zIndex: 10,
+
     },
-    logo: {
-        fontSize: 30,
-        fontWeight: "bold",
-        color: "#0f172a",
+    topBarContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
-    right: {
-        display: "flex",
-        flexDirection: "row",
-        gap: 16,
-    }
+    brandName: {
+        ...Typography.headingM,
+        color: Colors.textPrimary,
+    },
+    avatarButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        borderWidth: 1,
+        borderColor: Colors.borderActive,
+        backgroundColor: Colors.surfaceTertiary,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
 })
