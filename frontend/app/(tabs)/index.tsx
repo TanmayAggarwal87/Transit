@@ -1,5 +1,5 @@
 import React, { useRef, useMemo, useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Dimensions, TextInput, ScrollView, Image } from 'react-native';
+import { StyleSheet, Text, View, Dimensions, TextInput, ScrollView, Image, Pressable } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import MapView, { PROVIDER_GOOGLE, MapStyleElement } from 'react-native-maps';
 import BottomSheet, { BottomSheetScrollView, BottomSheetView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
@@ -29,7 +29,7 @@ const darkMapStyle: MapStyleElement[] = [
   { featureType: "water", elementType: "labels.text.stroke", stylers: [{ color: "#17263c" }] }
 ];
 
-type RideState = 'idle' | 'search' | 'options' | 'matching' | 'assigned';
+type RideState = 'idle' | 'search' | 'options' | 'matching' | 'assigned' | 'in_progress' | 'completed';
 
 export default function HomeScreen() {
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -250,6 +250,88 @@ export default function HomeScreen() {
           <Text style={styles.secondaryBtnText}>Share trip status</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={[styles.secondaryBtn, { backgroundColor: Colors.surfaceSecondary }]} onPress={() => { setRideState('in_progress'); bottomSheetRef.current?.snapToIndex(0); }}>
+          <Ionicons name="play-outline" size={20} color={Colors.textPrimary} style={{ marginRight: 8 }} />
+          <Text style={styles.secondaryBtnText}>Mock: Start Trip</Text>
+        </TouchableOpacity>
+
+      </BottomSheetScrollView>
+    </Animated.View>
+  );
+
+  const [rating, setRating] = useState(0);
+
+  const renderInProgressState = () => (
+    <Animated.View entering={FadeIn} exiting={FadeOut} style={{ flex: 1 }}>
+      <BottomSheetScrollView bounces={false} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16 }}>
+        <View style={styles.assignedTopRow}>
+          <View>
+            <Text style={{ fontFamily: 'JetBrainsMono_500Medium', color: Colors.textPrimary, fontSize: 16 }}>Select Citywalk</Text>
+            <Text style={{ fontFamily: 'JetBrainsMono_500Medium', color: Colors.textSecondary, fontSize: 12 }}>Saket, New Delhi</Text>
+          </View>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={styles.etaLarge}>8 min</Text>
+          </View>
+        </View>
+
+        <View style={styles.inProgressTrackContainer}>
+          <View style={styles.inProgressTrackFill} />
+        </View>
+
+        <Text style={[styles.sectionLabel, { marginTop: 24 }]}>ESTIMATED FARE</Text>
+        <Text style={{ fontFamily: 'JetBrainsMono_500Medium', color: Colors.textPrimary, fontSize: 32 }}>₹ 164</Text>
+
+        <View style={[styles.evBadgePill, { marginTop: 16 }]}>
+          <Text style={styles.evBadgeText}>⚡ Driver battery: 79% · No charging needed</Text>
+        </View>
+
+        <TouchableOpacity style={[styles.secondaryBtn, { marginTop: 16 }]} onPress={() => { setRideState('completed'); bottomSheetRef.current?.snapToIndex(1); }}>
+          <Ionicons name="checkmark-done" size={20} color={Colors.textPrimary} style={{ marginRight: 8 }} />
+          <Text style={styles.secondaryBtnText}>End Demo Trip</Text>
+        </TouchableOpacity>
+      </BottomSheetScrollView>
+    </Animated.View>
+  );
+
+  const renderCompletedState = () => (
+    <Animated.View entering={FadeIn} exiting={FadeOut} style={{ flex: 1 }}>
+      <BottomSheetScrollView bounces={false} contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120, alignItems: 'center' }}>
+
+        <View style={styles.successCircleLarge}>
+          <Ionicons name="checkmark" size={32} color={Colors.success} />
+        </View>
+        <Text style={{ fontFamily: 'JetBrainsMono_500Medium', color: Colors.textPrimary, fontSize: 24, marginTop: 16 }}>You've arrived</Text>
+        <Text style={{ fontFamily: 'JetBrainsMono_500Medium', color: Colors.textSecondary, fontSize: 14 }}>Select Citywalk · 12:34 PM</Text>
+
+        <View style={styles.fareBreakdownCard}>
+          <Text style={{ fontFamily: 'JetBrainsMono_500Medium', color: Colors.textPrimary, fontSize: 40, textAlign: 'center', marginBottom: 16 }}>₹ 192</Text>
+          <View style={styles.fareRow}>
+            <Text style={{ fontFamily: 'JetBrainsMono_500Medium', color: Colors.textSecondary, fontSize: 14 }}>Base fare</Text>
+            <Text style={{ fontFamily: 'JetBrainsMono_500Medium', color: Colors.textSecondary, fontSize: 14 }}>₹150</Text>
+          </View>
+          <View style={styles.fareRow}>
+            <Text style={{ fontFamily: 'JetBrainsMono_500Medium', color: Colors.textSecondary, fontSize: 14 }}>Distance</Text>
+            <Text style={{ fontFamily: 'JetBrainsMono_500Medium', color: Colors.textSecondary, fontSize: 14 }}>₹32</Text>
+          </View>
+          <View style={[styles.fareRow, { borderBottomWidth: 0 }]}>
+            <Text style={{ fontFamily: 'JetBrainsMono_500Medium', color: Colors.textSecondary, fontSize: 14 }}>Taxes</Text>
+            <Text style={{ fontFamily: 'JetBrainsMono_500Medium', color: Colors.textSecondary, fontSize: 14 }}>₹10</Text>
+          </View>
+        </View>
+
+        <Text style={[styles.sectionLabel, { marginTop: 24, marginBottom: 12 }]}>HOW WAS YOUR RIDE?</Text>
+        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 24 }}>
+          {[1, 2, 3, 4, 5].map((star) => (
+            <TouchableOpacity key={star} onPress={() => setRating(star)}>
+              <Ionicons name={star <= rating ? "star" : "star-outline"} size={40} color={star <= rating ? Colors.accent : Colors.textTertiary} />
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <Pressable style={styles.primaryCtaDone} onPress={() => { setRideState('idle'); bottomSheetRef.current?.snapToIndex(0); setRating(0); }}>
+          <Text style={styles.primaryCtaDoneText}>Done</Text>
+        </Pressable >
+
       </BottomSheetScrollView>
     </Animated.View>
   );
@@ -287,6 +369,8 @@ export default function HomeScreen() {
           {rideState === 'options' && renderOptionsState()}
           {rideState === 'matching' && renderMatchingState()}
           {rideState === 'assigned' && renderAssignedState()}
+          {rideState === 'in_progress' && renderInProgressState()}
+          {rideState === 'completed' && renderCompletedState()}
         </BottomSheetView>
       </BottomSheet>
     </View>
@@ -649,4 +733,59 @@ const styles = StyleSheet.create({
     fontFamily: 'JetBrainsMono_500Medium',
   },
 
+  inProgressTrackContainer: {
+    height: 4,
+    backgroundColor: Colors.surfaceTertiary,
+    borderRadius: 2,
+    width: '100%',
+    marginTop: 8,
+    overflow: 'hidden',
+  },
+  inProgressTrackFill: {
+    height: '100%',
+    width: '65%', // Mock progress
+    backgroundColor: Colors.accent,
+    borderRadius: 2,
+  },
+  successCircleLarge: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 2,
+    borderColor: Colors.success,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 214, 143, 0.1)',
+  },
+  fareBreakdownCard: {
+    backgroundColor: Colors.surfaceSecondary,
+    width: '100%',
+    padding: 24,
+    borderRadius: 16,
+    marginTop: 24,
+    borderWidth: 1,
+    borderColor: Colors.borderSubtle,
+  },
+  fareRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderSubtle,
+  },
+  primaryCtaDone: {
+    width: '100%',
+    height: 56,
+    backgroundColor: Colors.accent,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  primaryCtaDoneText: {
+    fontFamily: 'JetBrainsMono_500Medium',
+    color: Colors.surfacePrimary,
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  }
 });
