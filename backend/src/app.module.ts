@@ -7,6 +7,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule } from '@nestjs/config';
 import { User } from './auth/entities/user.entity';
 import { RefreshToken } from './auth/entities/refresh-token.entity';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { RefreshToken } from './auth/entities/refresh-token.entity';
       synchronize: process.env.NODE_ENV !== 'production',
     }),
     AuthModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

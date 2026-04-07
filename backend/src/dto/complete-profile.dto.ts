@@ -1,4 +1,5 @@
-import { IsEmail, IsString, Length, IsOptional } from 'class-validator';
+import { IsEmail, IsString, Length, IsOptional, MinLength, MaxLength } from 'class-validator';
+import { IsNull } from 'typeorm/browser';
 
 export class CompleteProfileDto {
   @IsString()
@@ -12,4 +13,10 @@ export class CompleteProfileDto {
   @IsString()
   @IsOptional()
   avatar?: string;
+
+  @IsString()
+  @IsOptional()
+  @MinLength(10)
+  @MaxLength(10)
+  emergencyContact?:string
 }

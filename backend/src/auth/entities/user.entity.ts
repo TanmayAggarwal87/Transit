@@ -18,6 +18,9 @@ export class User {
   @Column({ nullable: true })
   avatar?: string;
 
+  @Column({ nullable: true })
+  emergencyContact?: string;
+
   @CreateDateColumn()
   createdAt: Date;
 
