@@ -1,12 +1,14 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch, Image } from 'react-native';
+import { StyleSheet, Text, View, Switch, TouchableOpacity } from 'react-native';
 import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
+import { useRouter } from 'expo-router';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [preferEV, setPreferEV] = React.useState(true);
 
   return (
@@ -53,7 +55,7 @@ export default function ProfileScreen() {
         <Text style={styles.sectionLabel}>ACCOUNT</Text>
         <View style={styles.menuGroup}>
           <MenuItem icon="pencil-outline" title="Edit profile" />
-          <MenuItem icon="location-outline" title="Saved places" />
+          <MenuItem icon="location-outline" title="Saved places" onPress={() => router.push('/saved-places')} />
           <MenuItem icon="shield-outline" title="Emergency contact" />
           <MenuItem icon="notifications-outline" title="Notification preferences" />
         </View>
@@ -61,8 +63,8 @@ export default function ProfileScreen() {
         {/* Payments defaults */}
         <Text style={styles.sectionLabel}>PAYMENTS</Text>
         <View style={styles.menuGroup}>
-          <MenuItem icon="card-outline" title="Payment methods" value="Visa •••• 4242" />
-          <MenuItem icon="wallet-outline" title="Transit credits" value="₹200" valueColor={Colors.success} />
+          <MenuItem icon="card-outline" title="Payment methods" value="Visa •••• 4242" onPress={() => router.push('/(tabs)/wallet')} />
+          <MenuItem icon="wallet-outline" title="Transit credits" value="₹200" valueColor={Colors.success} onPress={() => router.push('/(tabs)/wallet')} />
         </View>
 
         {/* Support */}
@@ -82,8 +84,8 @@ export default function ProfileScreen() {
   );
 }
 
-const MenuItem = ({ icon, title, value, valueColor = Colors.textSecondary }: any) => (
-  <TouchableOpacity style={styles.menuItem}>
+const MenuItem = ({ icon, title, value, valueColor = Colors.textSecondary, onPress }: any) => (
+  <TouchableOpacity style={styles.menuItem} onPress={onPress}>
     <Ionicons name={icon} size={22} color={Colors.textSecondary} style={{ marginRight: 16, width: 24 }} />
     <Text style={styles.menuItemTitle}>{title}</Text>
     {value && <Text style={[styles.menuItemValue, { color: valueColor }]}>{value}</Text>}

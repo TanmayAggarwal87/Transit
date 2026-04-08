@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import { User } from './auth/entities/user.entity';
 import { RefreshToken } from './auth/entities/refresh-token.entity';
 import { UsersModule } from './users/users.module';
+import { DriversModule } from './drivers/drivers.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { UsersModule } from './users/users.module';
     }),
     AuthModule,
     UsersModule,
+    DriversModule,
   ],
   controllers: [AppController],
   providers: [AppService],
