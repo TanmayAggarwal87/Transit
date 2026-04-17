@@ -6,7 +6,7 @@ import { JWT_SECRET } from '../constants/jwt.constants';
 export interface JwtPayload {
   sub: string;
   phone: string;
-  roles:string;
+  roles:string[];
   driverId:string|null
 }
 

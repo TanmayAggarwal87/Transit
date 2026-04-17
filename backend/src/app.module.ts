@@ -9,6 +9,10 @@ import { User } from './users/entities/user.entity';
 import { RefreshToken } from './auth/entities/refresh-token.entity';
 import { UsersModule } from './users/users.module';
 import { DriversModule } from './drivers/drivers.module';
+import { Driver } from './drivers/entities/driver.entity';
+import { Vehicle } from './drivers/entities/vehicle.entity';
+import { DriverDocument } from './drivers/entities/driver-document.entity';
+import { VehicleDocument } from './drivers/entities/vehicle-document.entity';
 
 @Module({
   imports: [
@@ -20,10 +24,14 @@ import { DriversModule } from './drivers/drivers.module';
       ttl: 300,
     }),
     TypeOrmModule.forRoot({
-      type: 'better-sqlite3',
-      database: process.env.DB_PATH || 'transit.db',
-      entities: [User, RefreshToken],
-      synchronize: process.env.NODE_ENV !== 'production',
+      type: 'postgres',
+      host: 'localhost',
+      port: 5432,
+      username: 'postgres',
+      password: 'test1234',
+      database: 'Transit',
+      entities: [User, RefreshToken,Driver,Vehicle,DriverDocument,VehicleDocument],
+      synchronize: true,
     }),
     AuthModule,
     UsersModule,
