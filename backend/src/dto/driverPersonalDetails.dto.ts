@@ -1,7 +1,7 @@
 import { IsEmail, IsString, Length, IsOptional, MinLength, MaxLength } from 'class-validator';
 import { IsNull } from 'typeorm/browser';
 
-export class CompleteProfileDto {
+export class DriverPersonalInfo {
   @IsString()
   @Length(3, 50)
   name!: string;
@@ -11,12 +11,17 @@ export class CompleteProfileDto {
   email!: string;
 
   @IsString()
-  @IsOptional()
-  avatar?: string;
+  @Length(10)
+
+  phone!:string
+
+  @IsString()
+  @Length(5, 150)
+  address!: string;
+
 
   @IsString()
   @IsOptional()
-  @MinLength(10)
-  @MaxLength(10)
-  emergencyContact?:string
+  avatar?: string;
+
 }

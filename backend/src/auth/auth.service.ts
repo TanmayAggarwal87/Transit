@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { Inject } from '@nestjs/common';
-import { User } from './entities/user.entity';
+import { User } from '../users/entities/user.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { RateLimitService } from './services/rate-limit.service';
 import { SmsService } from './services/sms.service';
@@ -113,7 +113,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      user: { id: savedUser.id, phone: savedUser.phone, name: savedUser.name, email: savedUser.email, avatar: savedUser.avatar },
+      user: { id: savedUser.id, phone: savedUser.phone, name: savedUser.name, email: savedUser.email, avatar: savedUser.avatar,roles:savedUser.roles },
     };
   }
 

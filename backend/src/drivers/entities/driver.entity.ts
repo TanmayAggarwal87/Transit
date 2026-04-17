@@ -5,9 +5,12 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  JoinColumn,
+  OneToOne,
 } from 'typeorm';
 import { Vehicle } from './vehicle.entity';
 import { DriverDocument } from './driver-document.entity';
+import { User } from 'src/users/entities/user.entity';
 
 export enum DriverOnboardingStatus {
   PENDING = 'pending',
@@ -22,23 +25,33 @@ export class Driver {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
-  fullName!: string;
+  @Column({ name: 'user_id' })
+  userId!: string;
 
-  @Column({ unique: true })
-  email!: string;
-
-  @Column({ unique: true })
-  phone!: string;
+  @OneToOne(() => User)
+  @JoinColumn({ name: 'user_id' })
+  user!: User;
 
   @Column({ type: 'text' })
   address!: string;
+
+  @Column({ name: 'license_number', unique: true })
+  licenseNumber!: string;
+
+  @Column({ name: 'license_expiry', type: 'date' })
+  licenseExpiry!: Date;
+
+  @Column({ name: 'aadhaar_number', unique: true, nullable: true })
+  aadhaarNumber!: string;
+
+  @Column({ name: 'pan_number', nullable: true })
+  panNumber!: string;
 
   @Column({ default: true })
   isActive!: boolean;
 
   @Column({
-    type: 'text',
+    type: 'enum',
     enum: DriverOnboardingStatus,
     default: DriverOnboardingStatus.PENDING,
   })

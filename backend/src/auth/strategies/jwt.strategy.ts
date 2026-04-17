@@ -6,6 +6,8 @@ import { JWT_SECRET } from '../constants/jwt.constants';
 export interface JwtPayload {
   sub: string;
   phone: string;
+  roles:string;
+  driverId:string|null
 }
 
 @Injectable()
@@ -19,6 +21,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   validate(payload: JwtPayload) {
-    return { userId: payload.sub, phone: payload.phone };
+    return { userId: payload.sub, 
+            phone: payload.phone ,
+            roles: payload.roles,
+            driverId: payload.driverId ?? null
+          };
   }
 }
