@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Vehicle } from './vehicle.entity';
 import { DriverDocument } from './driver-document.entity';
+import { BankAccount } from './bank-account.entity';
 import { User } from 'src/users/entities/user.entity';
 
 export enum DriverOnboardingStatus {
@@ -62,6 +63,9 @@ export class Driver {
 
   @OneToMany(() => DriverDocument, (document) => document.driver)
   documents!: DriverDocument[];
+
+  @OneToMany(() => BankAccount, (bankAccount) => bankAccount.driver)
+  bankAccounts!: BankAccount[];
 
   @CreateDateColumn()
   createdAt!: Date;

@@ -13,6 +13,7 @@ import { Driver } from './drivers/entities/driver.entity';
 import { Vehicle } from './drivers/entities/vehicle.entity';
 import { DriverDocument } from './drivers/entities/driver-document.entity';
 import { VehicleDocument } from './drivers/entities/vehicle-document.entity';
+import { BankAccount } from './drivers/entities/bank-account.entity';
 
 @Module({
   imports: [
@@ -30,7 +31,7 @@ import { VehicleDocument } from './drivers/entities/vehicle-document.entity';
       username: 'postgres',
       password: 'test1234',
       database: 'Transit',
-      entities: [User, RefreshToken,Driver,Vehicle,DriverDocument,VehicleDocument],
+      entities: [User, RefreshToken,Driver,Vehicle,DriverDocument,VehicleDocument,BankAccount],
       synchronize: true,
     }),
     AuthModule,

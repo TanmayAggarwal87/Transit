@@ -8,6 +8,9 @@ import { DriverPersonalInfo } from 'src/dto/driverPersonalDetails.dto';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { Driver, DriverOnboardingStatus } from './entities/driver.entity';
+import { UpdateDriverProfileDto } from 'src/dto/update-driver.dto';
+import { AddBankAccountDto, UpdateBankAccountDto } from 'src/dto/bank-account.dto';
+import { BankAccount } from './entities/bank-account.entity';
 
 @Injectable()
 export class DriversService {
@@ -15,10 +18,10 @@ export class DriversService {
     @InjectRepository(User) private userRepository: Repository<User>,
     @InjectRepository(Driver)
     private readonly driversRepository: Repository<Driver>,
+    @InjectRepository(BankAccount) private driverBankAccount :Repository<BankAccount>
   ) {}
 
   async register(userId: string, driverInfo: DriverPersonalInfo) {
-    console.log(userId)
     const existingDriver = await this.driversRepository.findOne({
         where: { user: { id: userId } },
         relations: ['user'],
@@ -71,22 +74,10 @@ export class DriversService {
     return savedDriver;
   }
 
-  async findByUserId(userId: string): Promise<Driver> {
+
+  async findById(userId: string): Promise<Driver> {
     const driver = await this.driversRepository.findOne({
       where: { userId },
-      relations: ['vehicles', 'documents'], // load related data
-    });
-
-    if (!driver) {
-      throw new NotFoundException('Driver profile not found');
-    }
-
-    return driver;
-  }
-
-  async findById(id: string): Promise<Driver> {
-    const driver = await this.driversRepository.findOne({
-      where: { id },
       relations: ['vehicles', 'documents', 'user'],
     });
 
@@ -95,5 +86,49 @@ export class DriversService {
     }
 
     return driver;
+  }
+  async updateProfile(userId:string, driverInfo:UpdateDriverProfileDto){
+   
+      const driver = await this.driversRepository.findOne({where:{userId}})
+      if(!driver){
+        throw new NotFoundException("Driver not found")
+      }
+      Object.assign(driver,driverInfo)
+      return this.driversRepository.save(driver)
+    
+  }
+
+  async addBankDetails(userId:string,userName:string, driverBankDetails:AddBankAccountDto){
+    console.log("add bank")
+    const driver = await this.driversRepository.findOne({where:{userId}})
+    console.log("add bank")
+    console.log(userName)
+    if(!driver){
+      throw new NotFoundException("Driver not found");
+    }
+    const driverAccountPayload = this.driverBankAccount.create({
+      driverId:driver.id,
+      accountHolderName:userName,
+      accountNumber:driverBankDetails.accountNumber,
+      ifscCode:driverBankDetails.ifscCode,
+      bankName:driverBankDetails.bankName
+    })
+      
+
+
+    const savedBankAccount = await this.driverBankAccount.save(driverAccountPayload);
+
+    return savedBankAccount;
+
+  }
+
+  async updateBankDetails(userId:string,name:string,updatedBankDetails:UpdateBankAccountDto){
+    const driver = await this.driversRepository.findOne({where:{userId}})
+    if(!driver){
+      throw new NotFoundException("Driver Not found")
+    }
+    Object.assign(driver,updatedBankDetails)
+      return this.driversRepository.save(driver)
+
   }
 }

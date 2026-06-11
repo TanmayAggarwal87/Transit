@@ -5,6 +5,7 @@ import { JWT_SECRET } from '../constants/jwt.constants';
 
 export interface JwtPayload {
   sub: string;
+  name:string,
   phone: string;
   roles:string[];
   driverId:string|null
@@ -22,6 +23,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   validate(payload: JwtPayload) {
     return { userId: payload.sub, 
+            name:payload.name,
             phone: payload.phone ,
             roles: payload.roles,
             driverId: payload.driverId ?? null

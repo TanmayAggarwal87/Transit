@@ -13,20 +13,18 @@ export class UsersService {
 
     async findAll(id:string){
         
-        try {
+   
             const user = await this.userRepository.findOne({where:{id:id}})
             if(!user)
             {
                 throw new NotFoundException("user not found")
             }
             return {user}
-        } catch (error) {
-            throw new Error(`${error}`);
-        }
+        
     }
     async updateInfo(id:string ,userInfo:CompleteProfileDto){
 
-        try {
+        
             const user = await this.userRepository.findOne({where:{id:id}})
             if(!user)
             {
@@ -34,26 +32,22 @@ export class UsersService {
             }
             Object.assign(user,userInfo)
             return this.userRepository.save(user)
-        } catch (error) {
-            throw new Error(`${error}`);
-        }
+       
     }
 
     async addEmergency(id:string, profile:CompleteProfileDto){
-        try {
+        
             const user = await this.userRepository.findOne({where:{id:id}})
             if(!user){
                 throw new NotFoundException("user not found")
             }
             Object.assign(user,profile)
             return this.userRepository.save(user)
-        } catch (error) {
-            throw new Error(`${error}`);
-        }
+        
     }
 
     async deleteEmergency(id:string){
-        try {
+        
             const user = await this.userRepository.findOne({where:{id:id}})
             if(!user){
                 throw new NotFoundException("user not found")
@@ -61,8 +55,6 @@ export class UsersService {
             user.emergencyContact = ""
     
             return this.userRepository.save(user)
-        } catch (error) {
-            throw new Error(`${error}`);
-        }
+        
     }
 }

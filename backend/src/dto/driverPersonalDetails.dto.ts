@@ -21,7 +21,6 @@ export class DriverPersonalInfo {
   aadhaarNumber!: string;
 
   @IsString()
-  @IsOptional()
   @Matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, { message: 'Invalid PAN format' })
   panNumber?: string;
 
