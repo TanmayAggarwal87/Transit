@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { StorageModule } from './storage/storage.module';
 import { User } from './users/entities/user.entity';
 import { RefreshToken } from './auth/entities/refresh-token.entity';
 import { UsersModule } from './users/users.module';
@@ -39,6 +40,7 @@ import { BankAccount } from './drivers/entities/bank-account.entity';
         },
       }),
     }),
+    StorageModule,
     AuthModule,
     UsersModule,
     DriversModule,

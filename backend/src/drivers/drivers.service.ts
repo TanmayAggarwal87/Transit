@@ -87,6 +87,18 @@ export class DriversService {
 
     return driver;
   }
+
+  /**
+   * Find driver by User ID
+   * @param userId - User ID from JWT
+   * @returns Driver object with relations
+   */
+  async findByUserId(userId: string): Promise<Driver | null> {
+    return this.driversRepository.findOne({
+      where: { userId },
+      relations: ['user'],
+    });
+  }
   async updateProfile(userId:string, driverInfo:UpdateDriverProfileDto){
    
       const driver = await this.driversRepository.findOne({where:{userId}})
