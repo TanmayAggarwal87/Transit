@@ -3,6 +3,7 @@ import { DriverPersonalInfo } from 'src/dto/driverPersonalDetails.dto';
 import { DriversService } from './drivers.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/role.guard';
+import { VerifiedDriverGuard } from 'src/auth/guards/verified-driver.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { User } from 'src/users/entities/user.entity';
 import { CurrentUser } from 'src/auth/decorators/current-users.decorator';
@@ -23,6 +24,7 @@ export class DriversController {
     }
 
     // Only approved drivers can access this
+    // get and update profile
     @Get('')
     @Roles('driver')
     getProfile(@CurrentUser() user: any) {
@@ -35,6 +37,7 @@ export class DriversController {
         return this.driverService.updateProfile(user.userId, driverInfo)
     }
 
+    /* add/update Bank details */
     @Post("addBankDetails")
     @Roles("driver")
     addBankDetails(
@@ -53,5 +56,29 @@ export class DriversController {
         return this.driverService.updateBankDetails(user.userId,user.name,dto)
     }
 
-    
+    //Driver Status toggling - Only verified drivers
+
+    @Patch("status")
+    @UseGuards(VerifiedDriverGuard)
+    @Roles("driver")
+    toggleStatus(
+        @CurrentUser() user,
+        @Body() dto:DriverPersonalInfo
+    ){
+        return this.driverService.toggleStatus(user.userId,dto);
+    }
+
+    @Patch("break")
+    @UseGuards(VerifiedDriverGuard)
+    @Roles("driver")
+    setBreak(@CurrentUser() user: any){
+        return this.driverService.setBreak(user.userId);
+    }
+
+    @Patch("resume")
+    @UseGuards(VerifiedDriverGuard)
+    @Roles("driver")
+    resume(@CurrentUser() user: any){
+        return this.driverService.resume(user.userId);
+    }
 }

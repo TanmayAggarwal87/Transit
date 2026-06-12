@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Driver } from './entities/driver.entity';
 import { User } from 'src/users/entities/user.entity';
 import { BankAccount } from './entities/bank-account.entity';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
    imports: [
@@ -13,6 +14,7 @@ import { BankAccount } from './entities/bank-account.entity';
       User,
       BankAccount
     ]),
+    AuthModule,
   ],
   controllers: [DriversController],
   providers: [DriversService]

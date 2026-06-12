@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DriverPersonalInfo } from 'src/dto/driverPersonalDetails.dto';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
-import { Driver, DriverOnboardingStatus } from './entities/driver.entity';
+import { Driver, DriverOnboardingStatus, DriverStatus } from './entities/driver.entity';
 import { UpdateDriverProfileDto } from 'src/dto/update-driver.dto';
 import { AddBankAccountDto, UpdateBankAccountDto } from 'src/dto/bank-account.dto';
 import { BankAccount } from './entities/bank-account.entity';
@@ -131,4 +131,41 @@ export class DriversService {
       return this.driversRepository.save(driver)
 
   }
+
+  async toggleStatus(userId:string,driverDto:DriverPersonalInfo){
+    const driver = await this.driversRepository.findOne({where:{userId}})
+    if(!driver){
+      throw new NotFoundException("driver not found")
+    }
+
+    if(driver.status===DriverStatus.OFFLINE){
+        driver.status = DriverStatus.ONLINE;
+    }
+    else if(driver.status===DriverStatus.ONLINE){
+      driver.status = DriverStatus.OFFLINE;
+    }
+
+    return this.driversRepository.save(driver);
+  }
+
+  async setBreak(userId:string){
+    const driver = await this.driversRepository.findOne({where:{userId}})
+    if(!driver){
+      throw new NotFoundException("driver not found")
+    }
+
+    driver.status = DriverStatus.BREAK;
+    return this.driversRepository.save(driver);
+  }
+
+  async resume(userId:string){
+    const driver = await this.driversRepository.findOne({where:{userId}})
+    if(!driver){
+      throw new NotFoundException("driver not found")
+    }
+
+    driver.status = DriverStatus.ONLINE;
+    return this.driversRepository.save(driver);
+  }
+
 }

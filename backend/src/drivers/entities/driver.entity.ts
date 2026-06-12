@@ -20,6 +20,12 @@ export enum DriverOnboardingStatus {
   VERIFIED = 'verified',
   REJECTED = 'rejected',
 }
+export enum DriverStatus {
+  ONLINE = 'online',
+  OFFLINE = 'offline',
+  ON_RIDE = 'on_ride',
+  BREAK = 'break',
+}
 
 @Entity('drivers')
 export class Driver {
@@ -35,6 +41,13 @@ export class Driver {
 
   @Column({ type: 'text' })
   address!: string;
+
+  @Column({
+    type: 'enum',
+    enum: DriverStatus,
+    default: DriverStatus.OFFLINE,
+  })
+  status!: DriverStatus;
 
   @Column({ name: 'license_number', unique: true })
   licenseNumber!: string;

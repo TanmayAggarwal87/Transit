@@ -4,7 +4,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { User } from './users/entities/user.entity';
 import { RefreshToken } from './auth/entities/refresh-token.entity';
 import { UsersModule } from './users/users.module';
@@ -24,15 +24,20 @@ import { BankAccount } from './drivers/entities/bank-account.entity';
       isGlobal: true,
       ttl: 300,
     }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: 'test1234',
-      database: 'Transit',
-      entities: [User, RefreshToken,Driver,Vehicle,DriverDocument,VehicleDocument,BankAccount],
-      synchronize: true,
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        url: configService.get('DB_URL'),
+        entities: [User, RefreshToken,Driver,Vehicle,DriverDocument,VehicleDocument,BankAccount],
+        synchronize: true,
+        ssl: true,
+        extra: {
+          ssl: {
+            rejectUnauthorized: false,
+          },
+        },
+      }),
     }),
     AuthModule,
     UsersModule,

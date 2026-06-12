@@ -26,7 +26,6 @@ export class RolesGuard implements CanActivate {
     } catch {
       userRoles = ['rider'];
     } 
-    console.log('request.user = ', user);
 
     const hasRole = requiredRoles.some(role => userRoles.includes(role));
     

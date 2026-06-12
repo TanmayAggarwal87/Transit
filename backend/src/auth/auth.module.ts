@@ -4,23 +4,27 @@ import { AuthController } from './auth.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../users/entities/user.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
+import { Driver } from '../drivers/entities/driver.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RateLimitService } from './services/rate-limit.service';
 import { SmsService } from './services/sms.service';
+import { RolesGuard } from './guards/role.guard';
+import { VerifiedDriverGuard } from './guards/verified-driver.guard';
 import { JWT_SECRET, JWT_EXPIRATION } from './constants/jwt.constants';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, RefreshToken]),
+    TypeOrmModule.forFeature([User, RefreshToken, Driver]),
     PassportModule,
     JwtModule.register({
       secret: JWT_SECRET,
       signOptions: { expiresIn: JWT_EXPIRATION },
     }),
   ],
-  providers: [AuthService, JwtStrategy, RateLimitService, SmsService],
+  providers: [AuthService, JwtStrategy, RateLimitService, SmsService, RolesGuard, VerifiedDriverGuard],
   controllers: [AuthController],
+  exports: [RolesGuard, VerifiedDriverGuard],
 })
 export class AuthModule {}
