@@ -15,6 +15,7 @@ import { Vehicle } from './drivers/entities/vehicle.entity';
 import { DriverDocument } from './drivers/entities/driver-document.entity';
 import { VehicleDocument } from './drivers/entities/vehicle-document.entity';
 import { BankAccount } from './drivers/entities/bank-account.entity';
+import { VehiclesModule } from './vehicles/vehicles.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { BankAccount } from './drivers/entities/bank-account.entity';
     AuthModule,
     UsersModule,
     DriversModule,
+    VehiclesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -29,7 +29,6 @@ import { UploadDocumentDto } from './dto/upload-document.dto';
 export class DriversController {
   constructor(
     private driverService: DriversService,
-    private driverDocumentsService: DriverDocumentsService,
   ) {}
 
   @Post('register')
