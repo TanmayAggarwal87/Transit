@@ -104,7 +104,6 @@ export class DriversController {
     /**
      * Upload or replace a driver document
      * File validation: max 5MB, only JPEG/PNG/PDF
-     * All files stored privately on Cloudinary
      */
     @Post('documents/upload')
     @Roles('driver')
@@ -136,33 +135,13 @@ export class DriversController {
       @UploadedFile() file: any,
       @Body() dto: UploadDocumentDto,
     ) {
-      // Find driver by user ID
-      const driver = await this.driverService.findByUserId(user.id);
-
-      if (!driver) {
-        throw new Error('Driver profile not found');
-      }
-
-      return this.driverDocumentsService.uploadDocument(
-        driver.id,
-        file,
-        dto,
-      );
+      return this.driverService.uploadDriverDocument(user.id, file, dto)
     }
 
-    /**
-     * Get all documents for the authenticated driver
-     */
     @Get('documents')
     @Roles('driver')
     async getMyDocuments(@CurrentUser() user: User) {
-      const driver = await this.driverService.findByUserId(user.id);
-
-      if (!driver) {
-        throw new Error('Driver profile not found');
-      }
-
-      return this.driverDocumentsService.findByDriverId(driver.id);
+      return this.driverService.getDriverDocuments(user.id);
     }
 
     /**
@@ -175,9 +154,6 @@ export class DriversController {
       @CurrentUser() user: User,
       @Param('id') documentId: string,
     ) {
-      return this.driverDocumentsService.getSignedViewUrl(
-        documentId,
-        user.id,
-      );
+      return this.driverService.viewDriverDocument(documentId, user.id);
     }
 }

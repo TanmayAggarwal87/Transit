@@ -10,8 +10,7 @@ import * as cloudinary from 'cloudinary';
  * 
  * FILE ENCODING SCHEME:
  * filePath is stored as: {resourceType}:{format}:{publicId}
- * Example: "image:jpg:a1b2c3d4-e5f6-7890-abcd-ef1234567890"
- * 
+ * (┬┬﹏┬┬)
  * This allows us to reconstruct all parameters needed for getSignedUrl() and deleteFile()
  */
 @Injectable()
@@ -24,14 +23,8 @@ export class StorageService {
     });
   }
 
-  /**
-   * Uploads a file to Cloudinary with private access
-   * @param file - Multer file object
-   * @param folder - Cloudinary folder path (e.g., 'drivers/uuid/driving_license')
-   * @returns Object with publicId, resourceType, and format for later retrieval
-   */
   async uploadFile(
-    file: Express.Multer.File,
+    file: any,
     folder: string,
   ): Promise<{ publicId: string; resourceType: string; format: string }> {
     try {
@@ -63,16 +56,6 @@ export class StorageService {
     }
   }
 
-  /**
-   * Generates a time-limited signed URL for private file access
-   * Required for accessing private Cloudinary files
-   * 
-   * @param publicId - Cloudinary public ID
-   * @param resourceType - Resource type (image, video, raw, etc.)
-   * @param format - File extension
-   * @param expiresInSeconds - URL expiration time (default 300 seconds = 5 minutes)
-   * @returns Signed URL for temporary file access
-   */
   getSignedUrl(
     publicId: string,
     resourceType: string,
@@ -96,13 +79,6 @@ export class StorageService {
     }
   }
 
-  /**
-   * Deletes a file from Cloudinary
-   * Silently ignores "not found" errors
-   * 
-   * @param publicId - Cloudinary public ID
-   * @param resourceType - Resource type (image, video, raw, etc.)
-   */
   async deleteFile(publicId: string, resourceType: string): Promise<void> {
     try {
       await cloudinary.v2.uploader.destroy(publicId, {
@@ -118,11 +94,6 @@ export class StorageService {
     }
   }
 
-  /**
-   * Parses the encoded filePath to extract components
-   * @param filePath - Encoded path in format: {resourceType}:{format}:{publicId}
-   * @returns Object with publicId, resourceType, and format
-   */
   parseFilePath(
     filePath: string,
   ): { publicId: string; resourceType: string; format: string } {
@@ -130,13 +101,6 @@ export class StorageService {
     return { publicId, resourceType, format };
   }
 
-  /**
-   * Encodes file components into filePath format
-   * @param publicId - Cloudinary public ID
-   * @param resourceType - Resource type
-   * @param format - File extension
-   * @returns Encoded filePath string
-   */
   encodeFilePath(
     publicId: string,
     resourceType: string,

@@ -11,6 +11,7 @@ import { Driver, DriverOnboardingStatus, DriverStatus } from './entities/driver.
 import { UpdateDriverProfileDto } from 'src/dto/update-driver.dto';
 import { AddBankAccountDto, UpdateBankAccountDto } from 'src/dto/bank-account.dto';
 import { BankAccount } from './entities/bank-account.entity';
+import { DriverDocumentsService } from './driver-documents.service';
 
 @Injectable()
 export class DriversService {
@@ -18,7 +19,8 @@ export class DriversService {
     @InjectRepository(User) private userRepository: Repository<User>,
     @InjectRepository(Driver)
     private readonly driversRepository: Repository<Driver>,
-    @InjectRepository(BankAccount) private driverBankAccount :Repository<BankAccount>
+    @InjectRepository(BankAccount) private driverBankAccount :Repository<BankAccount>,
+    private driverDocumentsService : DriverDocumentsService
   ) {}
 
   async register(userId: string, driverInfo: DriverPersonalInfo) {
@@ -178,6 +180,34 @@ export class DriversService {
 
     driver.status = DriverStatus.ONLINE;
     return this.driversRepository.save(driver);
+  }
+
+   async getDriverByUserId(userId: string): Promise<Driver> {
+    const driver = await this.driversRepository.findOne({
+      where: { userId },
+    });
+    if (!driver) {
+      throw new NotFoundException('Driver profile not found');
+    }
+    return driver;
+  }
+
+  async uploadDriverDocument(
+    userId: string,
+    file: Express.Multer.File,
+    dto: any,
+  ) {
+    const driver = await this.getDriverByUserId(userId);
+    return this.driverDocumentsService.uploadDocument(driver.id, file, dto);
+  }
+
+  async getDriverDocuments(userId: string) {
+    const driver = await this.getDriverByUserId(userId);
+    return this.driverDocumentsService.findByDriverId(driver.id);
+  }
+
+  async viewDriverDocument(documentId: string, userId: string) {
+    return this.driverDocumentsService.getSignedViewUrl(documentId, userId);
   }
 
 }
