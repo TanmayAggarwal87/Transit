@@ -4,6 +4,8 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
+import Keyv from 'keyv';
+import KeyvRedis from '@keyv/redis';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { StorageModule } from './storage/storage.module';
 import { User } from './users/entities/user.entity';
@@ -16,22 +18,38 @@ import { DriverDocument } from './drivers/entities/driver-document.entity';
 import { VehicleDocument } from './drivers/entities/vehicle-document.entity';
 import { BankAccount } from './drivers/entities/bank-account.entity';
 import { VehiclesModule } from './vehicles/vehicles.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    CacheModule.register({
+    CacheModule.registerAsync({
       isGlobal: true,
-      ttl: 300,
+      useFactory: () => ({
+        stores: [
+          new Keyv({
+            store: new KeyvRedis('redis://localhost:6379'),
+            ttl: 5 * 60 * 1000, // 5 minutes in ms
+          }),
+        ],
+      }),
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         url: configService.get('DB_URL'),
-        entities: [User, RefreshToken,Driver,Vehicle,DriverDocument,VehicleDocument,BankAccount],
+        entities: [
+          User,
+          RefreshToken,
+          Driver,
+          Vehicle,
+          DriverDocument,
+          VehicleDocument,
+          BankAccount,
+        ],
         synchronize: true,
         ssl: true,
         extra: {
@@ -46,6 +64,7 @@ import { VehiclesModule } from './vehicles/vehicles.module';
     UsersModule,
     DriversModule,
     VehiclesModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

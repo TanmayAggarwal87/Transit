@@ -1,8 +1,8 @@
 import { Body, Controller, Post, ValidationPipe } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { phone } from 'src/dto/phone.dto';
-import { VerifyOtpDto } from 'src/dto/verify-otp.dto';
-import { CompleteProfileDto } from 'src/dto/complete-profile.dto';
+import { phone } from 'src/auth/dto/phone.dto';
+import { VerifyOtpDto } from 'src/auth/dto/verify-otp.dto';
+import { CompleteProfileDto } from 'src/users/dto/complete-profile.dto';
 
 @Controller('auth')
 export class AuthController {

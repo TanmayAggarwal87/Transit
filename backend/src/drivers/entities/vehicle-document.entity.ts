@@ -54,6 +54,13 @@ export class VehicleDocument {
   @CreateDateColumn()
   createdAt!: Date;
 
+  //for admin handling
+  @Column({ name: 'verified_by', nullable: true })
+  verifiedBy!: string; // stores the admin's user.id
+
+  @Column({ name: 'verified_at', type: 'timestamp', nullable: true })
+  verifiedAt!: Date;
+
   @UpdateDateColumn()
   updatedAt!: Date;
 }

@@ -4,12 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DriverPersonalInfo } from 'src/dto/driverPersonalDetails.dto';
+import { DriverPersonalInfo } from 'src/drivers/dto/driverPersonalDetails.dto';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { Driver, DriverOnboardingStatus, DriverStatus } from './entities/driver.entity';
-import { UpdateDriverProfileDto } from 'src/dto/update-driver.dto';
-import { AddBankAccountDto, UpdateBankAccountDto } from 'src/dto/bank-account.dto';
+import { UpdateDriverProfileDto } from 'src/drivers/dto/update-driver.dto';
+import { AddBankAccountDto, UpdateBankAccountDto } from 'src/drivers/dto/bank-account.dto';
 import { BankAccount } from './entities/bank-account.entity';
 import { DriverDocumentsService } from './driver-documents.service';
 

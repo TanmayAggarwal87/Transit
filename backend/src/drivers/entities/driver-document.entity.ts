@@ -60,6 +60,13 @@ export class DriverDocument {
   @CreateDateColumn()
   createdAt!: Date;
 
+  // for admin handlings
+  @Column({ name: 'verified_by', nullable: true })
+  verifiedBy!: string; // stores the admin's user.id
+
+  @Column({ name: 'verified_at', type: 'timestamp', nullable: true })
+  verifiedAt!: Date;
+
   @UpdateDateColumn()
   updatedAt!: Date;
 }

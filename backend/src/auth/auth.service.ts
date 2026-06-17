@@ -8,7 +8,7 @@ import { User } from '../users/entities/user.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { RateLimitService } from './services/rate-limit.service';
 import { SmsService } from './services/sms.service';
-import { CompleteProfileDto } from 'src/dto/complete-profile.dto';
+import { CompleteProfileDto } from 'src/users/dto/complete-profile.dto';
 import { OTP_EXPIRATION, REFRESH_TOKEN_EXPIRATION, OTP_LENGTH } from './constants/jwt.constants';
 
 @Injectable()

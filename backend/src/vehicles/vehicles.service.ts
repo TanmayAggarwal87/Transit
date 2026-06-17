@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Driver } from 'src/drivers/entities/driver.entity';
 import { FuelType, Vehicle } from 'src/drivers/entities/vehicle.entity';
-import { VehicleInfoDto } from 'src/dto/vehicleInfo.dto';
+import { VehicleInfoDto } from 'src/vehicles/dto/vehicleInfo.dto';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 

@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
-import { CompleteProfileDto } from 'src/dto/complete-profile.dto';
+import { CompleteProfileDto } from 'src/users/dto/complete-profile.dto';
 import { rawListeners } from 'process';
 
 @Injectable()

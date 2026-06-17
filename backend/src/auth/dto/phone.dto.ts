@@ -3,5 +3,5 @@ export class phone{
     @IsString()
     @MinLength(10)
     @MaxLength(10)
-    phone:string
+    phone!:string
 }

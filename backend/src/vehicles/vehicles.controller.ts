@@ -3,7 +3,7 @@ import { CurrentUser } from 'src/auth/decorators/current-users.decorator';
 import { VehiclesService } from './vehicles.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/role.guard';
-import { VehicleInfoDto } from 'src/dto/vehicleInfo.dto';
+import { VehicleInfoDto } from 'src/vehicles/dto/vehicleInfo.dto';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 
 @Controller('drivers/vehicles')

@@ -11,7 +11,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { DriverPersonalInfo } from 'src/dto/driverPersonalDetails.dto';
+import { DriverPersonalInfo } from 'src/drivers/dto/driverPersonalDetails.dto';
 import { DriversService } from './drivers.service';
 import { DriverDocumentsService } from './driver-documents.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
@@ -20,8 +20,8 @@ import { VerifiedDriverGuard } from 'src/auth/guards/verified-driver.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { User } from 'src/users/entities/user.entity';
 import { CurrentUser } from 'src/auth/decorators/current-users.decorator';
-import { UpdateDriverProfileDto } from 'src/dto/update-driver.dto';
-import { AddBankAccountDto, UpdateBankAccountDto } from 'src/dto/bank-account.dto';
+import { UpdateDriverProfileDto } from 'src/drivers/dto/update-driver.dto';
+import { AddBankAccountDto, UpdateBankAccountDto } from 'src/drivers/dto/bank-account.dto';
 import { UploadDocumentDto } from './dto/upload-document.dto';
 
 @Controller('drivers')
