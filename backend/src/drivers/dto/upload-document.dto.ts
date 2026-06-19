@@ -12,7 +12,7 @@ import { DriverDocumentType } from '../entities/driver-document.entity';
  */
 export class UploadDocumentDto {
   @IsEnum(DriverDocumentType)
-  documentType: DriverDocumentType;
+  documentType!: DriverDocumentType;
 
   @IsOptional()
   @IsString()

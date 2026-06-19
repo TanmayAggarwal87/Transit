@@ -7,6 +7,7 @@ import { VehicleDocument } from 'src/drivers/entities/vehicle-document.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Driver } from 'src/drivers/entities/driver.entity';
 import { AuthModule } from 'src/auth/auth.module';
+import { VehicleDocumentsService } from './vehicle-documents.service';
 
 @Module({
   imports: [
@@ -19,7 +20,7 @@ import { AuthModule } from 'src/auth/auth.module';
         AuthModule,
     ],
   controllers: [VehiclesController],
-  providers: [VehiclesService]
+  providers: [VehiclesService, VehicleDocumentsService]
 })
 
 export class VehiclesModule{}
