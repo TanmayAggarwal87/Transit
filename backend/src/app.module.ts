@@ -19,6 +19,8 @@ import { VehicleDocument } from './drivers/entities/vehicle-document.entity';
 import { BankAccount } from './drivers/entities/bank-account.entity';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { AdminModule } from './admin/admin.module';
+import { SavedPlaceModule } from './saved-place/saved-place.module';
+import { SavedPlace } from './saved-place/entity/saved-place.entity';
 
 @Module({
   imports: [
@@ -49,6 +51,7 @@ import { AdminModule } from './admin/admin.module';
           DriverDocument,
           VehicleDocument,
           BankAccount,
+          SavedPlace,
         ],
         synchronize: true,
         ssl: true,
@@ -61,6 +64,7 @@ import { AdminModule } from './admin/admin.module';
     }),
     StorageModule,
     AuthModule,
+    SavedPlaceModule,
     UsersModule,
     DriversModule,
     VehiclesModule,
