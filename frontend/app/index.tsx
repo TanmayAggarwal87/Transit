@@ -1,18 +1,32 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { Alert, StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Colors, Typography } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { sendOtp } from '@/lib/auth';
 
 export default function PhoneAuthScreen() {
   const insets = useSafeAreaInsets();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
-  const handleNext = () => {
-    if (phoneNumber.length >= 10) {
-      router.push('/otp' as any);
+  const handleNext = async () => {
+    const phone = phoneNumber.replace(/\D/g, '');
+
+    if (phone.length !== 10 || isSending) {
+      return;
+    }
+
+    try {
+      setIsSending(true);
+      await sendOtp(phone);
+      router.push({ pathname: '/otp', params: { phone } } as any);
+    } catch (error) {
+      Alert.alert('Could not send code', error instanceof Error ? error.message : 'Please try again.');
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -33,7 +47,7 @@ export default function PhoneAuthScreen() {
           <View style={styles.content}>
             <Text style={styles.label}>SIGN IN</Text>
             <Text style={styles.heading}>Enter your number</Text>
-            <Text style={styles.subtext}>We'll send a one-time code to verify your account.</Text>
+            <Text style={styles.subtext}>{"We'll send a one-time code to verify your account."}</Text>
 
             <View style={[styles.inputContainer, isFocused && styles.inputFocused]}>
               <View style={styles.countryCode}>
@@ -46,7 +60,7 @@ export default function PhoneAuthScreen() {
                 placeholderTextColor={Colors.textTertiary}
                 keyboardType="phone-pad"
                 value={phoneNumber}
-                onChangeText={setPhoneNumber}
+                onChangeText={(text) => setPhoneNumber(text.replace(/\D/g, ''))}
                 onFocus={() => setIsFocused(true)}
                 maxLength={10}
               />
@@ -59,9 +73,9 @@ export default function PhoneAuthScreen() {
             style={[styles.ctaButton, phoneNumber.length < 10 && styles.ctaDisabled]}
             activeOpacity={0.8}
             onPress={handleNext}
-            disabled={phoneNumber.length < 10}
+            disabled={phoneNumber.length < 10 || isSending}
           >
-            <Text style={styles.ctaText}>Send code</Text>
+            <Text style={styles.ctaText}>{isSending ? 'Sending...' : 'Send code'}</Text>
             <Ionicons name="arrow-forward" size={20} color={phoneNumber.length < 10 ? Colors.textSecondary : Colors.surfacePrimary} style={styles.ctaIcon} />
           </TouchableOpacity>
         </View>

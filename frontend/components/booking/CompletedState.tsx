@@ -17,7 +17,7 @@ export const CompletedState = ({ setRideState, bottomSheetRef }: any) => {
         <View style={styles.successCircleLarge}>
           <Ionicons name="checkmark" size={32} color={Colors.success} />
         </View>
-        <Text style={{ fontFamily: 'JetBrainsMono_500Medium', color: Colors.textPrimary, fontSize: 24, marginTop: 16 }}>You've arrived</Text>
+        <Text style={{ fontFamily: 'JetBrainsMono_500Medium', color: Colors.textPrimary, fontSize: 24, marginTop: 16 }}>{"You've arrived"}</Text>
         <Text style={{ fontFamily: 'JetBrainsMono_500Medium', color: Colors.textSecondary, fontSize: 14 }}>Select Citywalk · 12:34 PM</Text>
 
         <View style={styles.fareBreakdownCard}>

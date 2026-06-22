@@ -5,11 +5,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import { useAuthStore } from '@/store/auth';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [preferEV, setPreferEV] = React.useState(true);
+  const {user}= useAuthStore()
+  console.log(user)
+
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -22,8 +26,8 @@ export default function ProfileScreen() {
           <View style={styles.avatarContainer}>
             <Ionicons name="person" size={40} color={Colors.textTertiary} />
           </View>
-          <Text style={styles.userName}>Rahul K.</Text>
-          <Text style={styles.userPhone}>+91 98765 43210</Text>
+          <Text style={styles.userName}>{user?.name}</Text>
+          <Text style={styles.userPhone}>+91 {user?.phone}</Text>
           <View style={styles.ratingBadge}>
             <Text style={styles.ratingBadgeText}>⭐ 4.94 · 52 trips</Text>
           </View>
@@ -36,7 +40,7 @@ export default function ProfileScreen() {
             <Text style={styles.insightHeader}>TRANSIT INTELLIGENCE</Text>
           </View>
           
-          <Text style={styles.insightHeadline}>You've saved ₹340 by riding in low-demand windows this month.</Text>
+          <Text style={styles.insightHeadline}>{"You've saved ₹340 by riding in low-demand windows this month."}</Text>
           
           <View style={styles.evToggleRow}>
             <View style={{ flex: 1 }}>

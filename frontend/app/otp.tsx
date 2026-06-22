@@ -1,18 +1,25 @@
 import { useState, useRef, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { router } from 'expo-router';
+import { Alert, StyleSheet, Text, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Colors, Typography } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { sendOtp, verifyOtp } from '@/lib/auth';
+import { useAuthStore } from '@/store/auth';
 
 export default function OTPScreen() {
   const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams();
+  const phoneNumber = typeof params.phone === 'string' ? params.phone : '';
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [focusedIndex, setFocusedIndex] = useState(0);
-  const inputs = useRef<Array<TextInput | null>>([]);
+  const inputs = useRef<(TextInput | null)[]>([]);
   const [countdown, setCountdown] = useState(30);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const isVerifyingRef = useRef(false);
 
   // Success animation states
   const checkmarkScale = useSharedValue(0);
@@ -24,30 +31,80 @@ export default function OTPScreen() {
   });
 
   useEffect(() => {
+    const focusTimer = setTimeout(() => {
+      inputs.current[0]?.focus();
+    }, 100);
+
+    return () => clearTimeout(focusTimer);
+  }, []);
+
+  useEffect(() => {
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
     }
   }, [countdown]);
 
-  const navigateToSetup = () => {
-    router.push('/setup' as any);
+  const navigateToSetup = (onboardingToken: string) => {
+    router.replace({ pathname: '/setup', params: { phone: phoneNumber, onboardingToken } } as any);
   };
 
-  const verifyOTP = () => {
-    setShowSuccess(true);
-    checkmarkScale.value = withSpring(1, { damping: 10, stiffness: 100 });
-    setTimeout(() => {
-      navigateToSetup();
-    }, 1500);
+  const verifyOTP = async (otp: string) => {
+    if (!phoneNumber || isVerifyingRef.current) {
+      return;
+    }
+
+    try {
+      isVerifyingRef.current = true;
+      setIsVerifying(true);
+      const response = await verifyOtp(phoneNumber, otp);
+      setShowSuccess(true);
+      checkmarkScale.value = withSpring(1, { damping: 10, stiffness: 100 });
+      setTimeout(() => {
+        if (response.isNewUser) {
+          navigateToSetup(response.onboardingToken);
+          return;
+        }
+
+        useAuthStore.getState().setSession(response);
+        router.replace('/(tabs)' as any);
+      }, 1500);
+    } catch (error) {
+      Alert.alert('Invalid code', error instanceof Error ? error.message : 'Please try again.');
+      setCode(['', '', '', '', '', '']);
+      setFocusedIndex(0);
+      setTimeout(() => {
+        inputs.current[0]?.focus();
+      }, 10);
+    } finally {
+      isVerifyingRef.current = false;
+      setIsVerifying(false);
+    }
+  };
+
+  const resendCode = async () => {
+    if (!phoneNumber || countdown > 0 || isResending) {
+      return;
+    }
+
+    try {
+      setIsResending(true);
+      await sendOtp(phoneNumber);
+      setCountdown(30);
+    } catch (error) {
+      Alert.alert('Could not resend code', error instanceof Error ? error.message : 'Please try again.');
+    } finally {
+      setIsResending(false);
+    }
   };
 
   const handleTextChange = (text: string, index: number) => {
+    const digit = text.replace(/\D/g, '').slice(-1);
     const newCode = [...code];
-    newCode[index] = text;
+    newCode[index] = digit;
     setCode(newCode);
 
-    if (text && index < 5) {
+    if (digit && index < 5) {
       setTimeout(() => {
         inputs.current[index + 1]?.focus();
       }, 10);
@@ -55,7 +112,7 @@ export default function OTPScreen() {
 
     // Check if fully entered
     if (newCode.every(digit => digit !== '')) {
-      verifyOTP();
+      verifyOTP(newCode.join(''));
     }
   };
 
@@ -84,7 +141,7 @@ export default function OTPScreen() {
           <View style={styles.content}>
             <Text style={styles.label}>VERIFY</Text>
             <Text style={styles.heading}>Check your messages</Text>
-            <Text style={styles.subtext}>We sent a code to •••• ••• 4291</Text>
+            <Text style={styles.subtext}>We sent a code to **** *** {phoneNumber.slice(-4)}</Text>
 
             <View style={styles.otpContainer}>
               {code.map((digit, index) => (
@@ -104,7 +161,6 @@ export default function OTPScreen() {
                     value={digit}
                     onChangeText={(text) => handleTextChange(text, index)}
                     onKeyPress={(e) => handleKeyPress(e, index)}
-
                     autoFocus={index === 0}
                     caretHidden={true}
                   />
@@ -121,10 +177,11 @@ export default function OTPScreen() {
             ) : (
               <TouchableOpacity
                 style={styles.resendContainer}
-                disabled={countdown > 0}
+                disabled={countdown > 0 || isResending}
+                onPress={resendCode}
               >
                 <Text style={[styles.resendText, countdown === 0 && styles.resendActive]}>
-                  {countdown > 0 ? `Resend code in ` : 'Resend code'}
+                  {isResending ? 'Resending...' : countdown > 0 ? `Resend code in ` : 'Resend code'}
                   {countdown > 0 && <Text style={styles.countdown}>00:{countdown.toString().padStart(2, '0')}</Text>}
                 </Text>
               </TouchableOpacity>

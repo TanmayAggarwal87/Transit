@@ -1,20 +1,49 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
-import { router } from 'expo-router';
+import { Alert, StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Colors, Typography } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { completeProfile } from '@/lib/auth';
+import { useAuthStore } from '@/store/auth';
 
 export default function ProfileSetupScreen() {
   const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams();
+  const phoneNumber = typeof params.phone === 'string' ? params.phone : '';
+  const onboardingToken = typeof params.onboardingToken === 'string' ? params.onboardingToken : '';
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [emergencyPhone, setEmergencyPhone] = useState('');
   const [isFocused, setIsFocused] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const canSubmit = name.trim().length >= 3 && email.trim().length > 0 && !isSubmitting;
 
-  const handleFinish = () => {
-    // Navigate to the tabs/home layout
-    router.replace('/(tabs)' as any);
+  const handleFinish = async () => {
+    if (!canSubmit) {
+      return;
+    }
+
+    if (!phoneNumber) {
+      Alert.alert('Missing phone number', 'Please restart sign in and verify your phone again.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const session = await completeProfile({
+        phone: phoneNumber,
+        name: name.trim(),
+        email: email.trim(),
+        onboardingToken,
+      });
+      useAuthStore.getState().setSession(session);
+      router.replace('/(tabs)' as any);
+    } catch (error) {
+      Alert.alert('Could not complete profile', error instanceof Error ? error.message : 'Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -50,6 +79,8 @@ export default function ProfileSetupScreen() {
                 placeholderTextColor={Colors.textTertiary}
                 value={name}
                 onChangeText={setName}
+                onFocus={() => setIsFocused('name')}
+                onBlur={() => setIsFocused(null)}
 
 
 
@@ -59,7 +90,7 @@ export default function ProfileSetupScreen() {
 
           {/* Email Field*/}
           <View style={styles.inputWrapper}>
-            <Text style={styles.inputLabel}>EMAIL (OPTIONAL)</Text>
+            <Text style={styles.inputLabel}>EMAIL</Text>
             <View style={[styles.inputContainer, isFocused === 'email' && styles.inputFocused]}>
               <TextInput
                 style={styles.input}
@@ -69,6 +100,8 @@ export default function ProfileSetupScreen() {
                 autoCapitalize="none"
                 value={email}
                 onChangeText={setEmail}
+                onFocus={() => setIsFocused('email')}
+                onBlur={() => setIsFocused(null)}
 
 
 
@@ -88,6 +121,8 @@ export default function ProfileSetupScreen() {
                 keyboardType="phone-pad"
                 value={emergencyPhone}
                 onChangeText={setEmergencyPhone}
+                onFocus={() => setIsFocused('emergency')}
+                onBlur={() => setIsFocused(null)}
 
               />
             </View>
@@ -109,13 +144,13 @@ export default function ProfileSetupScreen() {
 
         <View style={styles.footer}>
           <TouchableOpacity
-            style={[styles.ctaButton, name.length < 2 && styles.ctaDisabled]}
+            style={[styles.ctaButton, !canSubmit && styles.ctaDisabled]}
             activeOpacity={0.8}
             onPress={handleFinish}
-            disabled={name.length < 2}
+            disabled={!canSubmit}
           >
-            <Text style={styles.ctaText}>Let's go</Text>
-            <Ionicons name="arrow-forward" size={20} color={name.length < 2 ? Colors.textSecondary : Colors.surfacePrimary} style={styles.ctaIcon} />
+            <Text style={styles.ctaText}>{isSubmitting ? 'Creating...' : "Let's go"}</Text>
+            <Ionicons name="arrow-forward" size={20} color={!canSubmit ? Colors.textSecondary : Colors.surfacePrimary} style={styles.ctaIcon} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
