@@ -1,9 +1,10 @@
 import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import { Tabs } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import Animated, { useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuthStore } from '@/store/auth';
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
   const insets = useSafeAreaInsets();
@@ -76,6 +77,12 @@ const AnimatedIcon = ({ isFocused, iconName }: { isFocused: boolean; iconName: a
 };
 
 export default function TabsLayout() {
+  const accessToken = useAuthStore((state) => state.accessToken);
+
+  if (!accessToken) {
+    return <Redirect href="/sign-in" />;
+  }
+
   return (
     <Tabs
       tabBar={(props) => <CustomTabBar {...props} />}

@@ -33,5 +33,10 @@ export class AuthController {
   async refreshToken(@Body(new ValidationPipe()) { refreshToken }: { refreshToken: string }) {
     return this.authService.refreshAccessToken(refreshToken);
   }
+
+  @Post('logout')
+  async logout(@Body(new ValidationPipe()) { refreshToken }: { refreshToken: string }) {
+    return this.authService.logout(refreshToken);
+  }
 }
 

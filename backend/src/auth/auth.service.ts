@@ -131,6 +131,15 @@ export class AuthService {
     return { accessToken };
   }
 
+  async logout(refreshToken: string) {
+    if (!refreshToken) {
+      throw new BadRequestException('Refresh token is required');
+    }
+
+    await this.refreshTokenRepository.delete({ token: refreshToken });
+    return { message: 'Logged out successfully' };
+  }
+
   private async generateTokens(user: User) {
     const payload = { sub: user.id,name:user.name, phone: user.phone ,roles:user.roles};
 

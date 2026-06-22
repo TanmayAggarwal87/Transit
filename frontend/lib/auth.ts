@@ -91,3 +91,6 @@ export const completeProfile = (profile: {
   avatar?: string;
   onboardingToken?: string;
 }) => authRequest<AuthSession>('/auth/completeProfile', profile);
+
+export const logout = (refreshToken: string) =>
+  authRequest<{ message: string }>('/auth/logout', { refreshToken });

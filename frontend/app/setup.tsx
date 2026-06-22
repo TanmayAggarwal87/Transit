@@ -79,8 +79,7 @@ export default function ProfileSetupScreen() {
                 placeholderTextColor={Colors.textTertiary}
                 value={name}
                 onChangeText={setName}
-                onFocus={() => setIsFocused('name')}
-                onBlur={() => setIsFocused(null)}
+
 
 
 
@@ -100,8 +99,7 @@ export default function ProfileSetupScreen() {
                 autoCapitalize="none"
                 value={email}
                 onChangeText={setEmail}
-                onFocus={() => setIsFocused('email')}
-                onBlur={() => setIsFocused(null)}
+
 
 
 
@@ -121,8 +119,6 @@ export default function ProfileSetupScreen() {
                 keyboardType="phone-pad"
                 value={emergencyPhone}
                 onChangeText={setEmergencyPhone}
-                onFocus={() => setIsFocused('emergency')}
-                onBlur={() => setIsFocused(null)}
 
               />
             </View>

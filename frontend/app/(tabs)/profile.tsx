@@ -6,14 +6,24 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/store/auth';
+import { logout } from '@/lib/auth';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [preferEV, setPreferEV] = React.useState(true);
-  const {user}= useAuthStore()
-  console.log(user)
+  const { user, refreshToken, clearSession } = useAuthStore();
 
+  const handleSignOut = async () => {
+    try {
+      if (refreshToken) {
+        await logout(refreshToken);
+      }
+    } finally {
+      clearSession();
+      router.replace('/sign-in' as any);
+    }
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -79,7 +89,7 @@ export default function ProfileScreen() {
           <MenuItem icon="information-circle-outline" title="About Transit" value="v1.0.0" />
         </View>
 
-        <TouchableOpacity style={styles.signOutBtn}>
+        <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut}>
           <Text style={styles.signOutText}>Sign out</Text>
         </TouchableOpacity>
 
