@@ -21,6 +21,9 @@ import { VehiclesModule } from './vehicles/vehicles.module';
 import { AdminModule } from './admin/admin.module';
 import { SavedPlaceModule } from './saved-place/saved-place.module';
 import { SavedPlace } from './saved-place/entity/saved-place.entity';
+import { PaymentMethod } from './payment-methods/entity/payment-method.entity';
+import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
+import { RidesModule } from './rides/rides.module';
 
 @Module({
   imports: [
@@ -52,6 +55,7 @@ import { SavedPlace } from './saved-place/entity/saved-place.entity';
           VehicleDocument,
           BankAccount,
           SavedPlace,
+          PaymentMethod,
         ],
         synchronize: true,
         ssl: true,
@@ -65,10 +69,12 @@ import { SavedPlace } from './saved-place/entity/saved-place.entity';
     StorageModule,
     AuthModule,
     SavedPlaceModule,
+    PaymentMethodsModule,
     UsersModule,
     DriversModule,
     VehiclesModule,
     AdminModule,
+    RidesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
