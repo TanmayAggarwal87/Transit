@@ -20,6 +20,15 @@ export default function OTPScreen() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const isVerifyingRef = useRef(false);
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) {
+        clearTimeout(successTimerRef.current);
+      }
+    };
+  }, []);
 
   // Success animation states
   const checkmarkScale = useSharedValue(0);
@@ -60,7 +69,7 @@ export default function OTPScreen() {
       const response = await verifyOtp(phoneNumber, otp);
       setShowSuccess(true);
       checkmarkScale.value = withSpring(1, { damping: 10, stiffness: 100 });
-      setTimeout(() => {
+      successTimerRef.current = setTimeout(() => {
         if (response.isNewUser) {
           navigateToSetup(response.onboardingToken);
           return;

@@ -32,10 +32,15 @@ export type VerifyOtpResponse =
       isNewUser: false;
     } & AuthSession);
 
+let cachedApiBaseUrl: string | null = null;
+
 const getApiBaseUrl = () => {
+  if (cachedApiBaseUrl) return cachedApiBaseUrl;
+
   const extra = Constants.expoConfig?.extra as { apiBaseUrl?: string } | undefined;
   if (extra?.apiBaseUrl) {
-    return extra.apiBaseUrl.replace(/\/$/, '');
+    cachedApiBaseUrl = extra.apiBaseUrl.replace(/\/$/, '');
+    return cachedApiBaseUrl;
   }
 
   const expoConfig = Constants.expoConfig as ({ hostUri?: string } & typeof Constants.expoConfig) | null;
@@ -46,10 +51,12 @@ const getApiBaseUrl = () => {
   const host = typeof hostUri === 'string' ? hostUri.split(':')[0] : '';
 
   if (host) {
-    return `http://${host}:3000`;
+    cachedApiBaseUrl = `http://${host}:3000`;
+    return cachedApiBaseUrl;
   }
 
-  return Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
+  cachedApiBaseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
+  return cachedApiBaseUrl;
 };
 
 const getErrorMessage = (body: ApiErrorBody | null) => {

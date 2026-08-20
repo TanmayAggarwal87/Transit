@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useCallback, memo } from 'react';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
 import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 const FILTERS = ['All', 'This month', 'Last 3 months', 'EV Rides', 'Shared'];
 
@@ -15,33 +15,59 @@ const MOCK_HISTORY = [
   { id: '5', route: 'Saket → Hauz Khas', price: '₹120', date: '04 May · 09:10 PM', type: 'Transit Share', ev: false },
 ];
 
+const ItemSeparator = memo(() => <View style={{ height: 16 }} />);
+
+const RideCard = memo(({ item }: { item: typeof MOCK_HISTORY[number] }) => (
+  <Animated.View entering={FadeIn} style={styles.card}>
+    <TouchableOpacity activeOpacity={0.8} style={styles.cardInner}>
+      <View style={styles.cardTop}>
+        <Text style={styles.routeText} numberOfLines={1}>{item.route}</Text>
+        <Text style={styles.priceText}>{item.price}</Text>
+      </View>
+      <View style={styles.cardMiddle}>
+        <Text style={styles.dateText}>{item.date}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {item.ev && <Text style={styles.evPrefix}>⚡ </Text>}
+          <Text style={styles.typeText}>{item.type}</Text>
+        </View>
+      </View>
+      {item.saved && (
+        <View style={styles.savingsRow}>
+          <View style={styles.savingsTrack} />
+          <Text style={styles.savingsText}>{item.saved}</Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  </Animated.View>
+));
+
+const FilterItem = memo(({ item, isActive, onPress }: { item: string; isActive: boolean; onPress: (item: string) => void }) => (
+  <TouchableOpacity 
+    style={[styles.filterPill, isActive && styles.filterPillActive]} 
+    onPress={() => onPress(item)}
+  >
+    <Text style={[styles.filterPillText, isActive && styles.filterPillTextActive]}>{item}</Text>
+  </TouchableOpacity>
+));
+
 export default function ActivityScreen() {
   const insets = useSafeAreaInsets();
   const [activeFilter, setActiveFilter] = useState('All');
 
-  const renderRideCard = ({ item }: any) => (
-    <Animated.View entering={FadeIn} style={styles.card}>
-      <TouchableOpacity activeOpacity={0.8} style={styles.cardInner}>
-        <View style={styles.cardTop}>
-          <Text style={styles.routeText} numberOfLines={1}>{item.route}</Text>
-          <Text style={styles.priceText}>{item.price}</Text>
-        </View>
-        <View style={styles.cardMiddle}>
-          <Text style={styles.dateText}>{item.date}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            {item.ev && <Text style={styles.evPrefix}>⚡ </Text>}
-            <Text style={styles.typeText}>{item.type}</Text>
-          </View>
-        </View>
-        {item.saved && (
-          <View style={styles.savingsRow}>
-            <View style={styles.savingsTrack} />
-            <Text style={styles.savingsText}>{item.saved}</Text>
-          </View>
-        )}
-      </TouchableOpacity>
-    </Animated.View>
-  );
+  const handleFilterPress = useCallback((item: string) => {
+    setActiveFilter(item);
+  }, []);
+
+  const renderRideCard = useCallback(({ item }: any) => (
+    <RideCard item={item} />
+  ), []);
+
+  const renderFilterItem = useCallback(({ item }: { item: string }) => (
+    <FilterItem item={item} isActive={activeFilter === item} onPress={handleFilterPress} />
+  ), [activeFilter, handleFilterPress]);
+
+  const filterKeyExtractor = useCallback((i: string) => i, []);
+  const historyKeyExtractor = useCallback((item: any) => item.id, []);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -54,28 +80,22 @@ export default function ActivityScreen() {
           horizontal
           showsHorizontalScrollIndicator={false}
           data={FILTERS}
-          keyExtractor={(i) => i}
+          keyExtractor={filterKeyExtractor}
           contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 16 }}
-          renderItem={({ item }) => {
-            const isActive = activeFilter === item;
-            return (
-              <TouchableOpacity 
-                style={[styles.filterPill, isActive && styles.filterPillActive]} 
-                onPress={() => setActiveFilter(item)}
-              >
-                <Text style={[styles.filterPillText, isActive && styles.filterPillTextActive]}>{item}</Text>
-              </TouchableOpacity>
-            )
-          }}
+          renderItem={renderFilterItem}
         />
       </View>
 
       <FlatList
         data={MOCK_HISTORY}
-        keyExtractor={(item) => item.id}
+        keyExtractor={historyKeyExtractor}
         renderItem={renderRideCard}
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
-        ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
+        ItemSeparatorComponent={ItemSeparator}
+        initialNumToRender={5}
+        maxToRenderPerBatch={5}
+        windowSize={5}
+        removeClippedSubviews={true}
       />
     </View>
   );

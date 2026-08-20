@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, Text } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { styles } from './styles';
 
-export const IdleState = ({ setRideState, bottomSheetRef }: any) => (
+export const IdleState = memo(({ setRideState, bottomSheetRef }: any) => (
   <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.sheetContent}>
     <TouchableOpacity style={styles.searchBar} activeOpacity={0.8} onPress={() => { setRideState('search'); bottomSheetRef.current?.snapToIndex(1); }}>
       <View style={styles.searchIndicator} />
@@ -46,4 +46,4 @@ export const IdleState = ({ setRideState, bottomSheetRef }: any) => (
       </TouchableOpacity>
     </View>
   </Animated.View>
-);
+));

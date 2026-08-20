@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { memo, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
@@ -7,7 +7,7 @@ import { Colors } from '@/constants/theme';
 import { styles } from './styles';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 
-export const CompletedState = ({ setRideState, bottomSheetRef }: any) => {
+export const CompletedState = memo(({ setRideState, bottomSheetRef }: any) => {
   const [rating, setRating] = useState(0);
 
   return (
@@ -52,4 +52,4 @@ export const CompletedState = ({ setRideState, bottomSheetRef }: any) => {
       </BottomSheetScrollView>
     </Animated.View>
   );
-};
+});

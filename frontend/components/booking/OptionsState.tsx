@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, Text } from 'react-native';
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
@@ -7,7 +7,7 @@ import { Colors } from '@/constants/theme';
 import { styles } from './styles';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 
-export const OptionsState = ({ setRideState }: any) => (
+export const OptionsState = memo(({ setRideState }: any) => (
   <Animated.View entering={FadeIn} exiting={FadeOut} style={{ flex: 1 }}>
     <View style={[styles.sheetHeader, { paddingHorizontal: 24, paddingVertical: 12, justifyContent: 'space-between' }]}>
       <TouchableOpacity onPress={() => setRideState('search')} style={styles.backButton}>
@@ -53,4 +53,4 @@ export const OptionsState = ({ setRideState }: any) => (
       </TouchableOpacity>
     </BottomSheetScrollView>
   </Animated.View>
-);
+));

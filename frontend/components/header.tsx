@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Typography } from '@/constants/theme';
 
-export default function Header() {
+export default memo(function Header() {
     const insets = useSafeAreaInsets();
     
     return (
@@ -11,7 +11,7 @@ export default function Header() {
             <Text style={styles.brandName}>Transit</Text>
         </View>
     );
-}
+});
 
 const styles = StyleSheet.create({
     headerContainer: {

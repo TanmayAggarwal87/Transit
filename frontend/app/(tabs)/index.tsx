@@ -35,6 +35,13 @@ const darkMapStyle: MapStyleElement[] = [
   { featureType: "water", elementType: "labels.text.stroke", stylers: [{ color: "#17263c" }] }
 ];
 
+const INITIAL_REGION = {
+  latitude: 28.6139,
+  longitude: 77.2090,
+  latitudeDelta: 0.05,
+  longitudeDelta: 0.05,
+};
+
 type RideState = 'idle' | 'search' | 'options' | 'matching' | 'assigned' | 'in_progress' | 'completed';
 
 export default function HomeScreen() {
@@ -63,12 +70,7 @@ export default function HomeScreen() {
         provider={PROVIDER_GOOGLE}
         customMapStyle={darkMapStyle}
         zoomEnabled={rideState === 'idle' || rideState === 'assigned'} // Lock bounds conceptually
-        initialRegion={{
-          latitude: 28.6139,
-          longitude: 77.2090,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        }}
+        initialRegion={INITIAL_REGION}
       />
 
       {/* Bottom Sheet State Machine */}

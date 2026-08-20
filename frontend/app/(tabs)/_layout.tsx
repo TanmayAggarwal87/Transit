@@ -1,3 +1,4 @@
+import React, { memo } from 'react';
 import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Redirect, Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -54,7 +55,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   );
 }
 
-const AnimatedIcon = ({ isFocused, iconName }: { isFocused: boolean; iconName: any }) => {
+const AnimatedIcon = memo(({ isFocused, iconName }: { isFocused: boolean; iconName: any }) => {
   const animatedStyle = useAnimatedStyle(() => {
     return {
       transform: [
@@ -74,7 +75,7 @@ const AnimatedIcon = ({ isFocused, iconName }: { isFocused: boolean; iconName: a
       {isFocused && <View style={styles.activeIndicator} />}
     </Animated.View>
   );
-};
+});
 
 export default function TabsLayout() {
   const accessToken = useAuthStore((state) => state.accessToken);

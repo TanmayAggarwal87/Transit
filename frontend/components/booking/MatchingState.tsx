@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, Text } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Colors } from '@/constants/theme';
 import { styles } from './styles';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 
-export const MatchingState = ({ setRideState, bottomSheetRef }: any) => (
+export const MatchingState = memo(({ setRideState, bottomSheetRef }: any) => (
   <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.sheetContent}>
     <Text style={styles.matchingHeading}>Finding your driver...</Text>
     <View style={styles.dotContainer}>
@@ -19,4 +19,4 @@ export const MatchingState = ({ setRideState, bottomSheetRef }: any) => (
       <Text style={styles.cancelGhostText}>Cancel ride</Text>
     </TouchableOpacity>
   </Animated.View>
-);
+));
