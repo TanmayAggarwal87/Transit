@@ -12,6 +12,7 @@ import { UpdateDriverProfileDto } from 'src/drivers/dto/update-driver.dto';
 import { AddBankAccountDto, UpdateBankAccountDto } from 'src/drivers/dto/bank-account.dto';
 import { BankAccount } from './entities/bank-account.entity';
 import { DriverDocumentsService } from './driver-documents.service';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class DriversService {
@@ -20,7 +21,8 @@ export class DriversService {
     @InjectRepository(Driver)
     private readonly driversRepository: Repository<Driver>,
     @InjectRepository(BankAccount) private driverBankAccount :Repository<BankAccount>,
-    private driverDocumentsService : DriverDocumentsService
+    private driverDocumentsService : DriverDocumentsService,
+    private redisService: RedisService,
   ) {}
 
   async register(userId: string, driverInfo: DriverPersonalInfo) {
@@ -146,39 +148,44 @@ export class DriversService {
 
   }
 
-  async toggleStatus(userId:string,driverDto:DriverPersonalInfo){
-    const driver = await this.driversRepository.findOne({where:{userId}})
-    if(!driver){
-      throw new NotFoundException("driver not found")
+  async toggleStatus(userId: string, driverDto: DriverPersonalInfo) {
+    const driver = await this.driversRepository.findOne({ where: { userId } });
+    if (!driver) {
+      throw new NotFoundException('driver not found');
     }
 
-    if(driver.status===DriverStatus.OFFLINE){
-        driver.status = DriverStatus.ONLINE;
-    }
-    else if(driver.status===DriverStatus.ONLINE){
+    if (driver.status === DriverStatus.OFFLINE) {
+      driver.status = DriverStatus.ONLINE;
+      await this.redisService.setDriverStatus(driver.id, 'available');
+    } else if (driver.status === DriverStatus.ONLINE) {
       driver.status = DriverStatus.OFFLINE;
+      await this.redisService.setDriverStatus(driver.id, 'offline');
+      await this.redisService.removeDriverGeoLocation(driver.id);
     }
 
     return this.driversRepository.save(driver);
   }
 
-  async setBreak(userId:string){
-    const driver = await this.driversRepository.findOne({where:{userId}})
-    if(!driver){
-      throw new NotFoundException("driver not found")
+  async setBreak(userId: string) {
+    const driver = await this.driversRepository.findOne({ where: { userId } });
+    if (!driver) {
+      throw new NotFoundException('driver not found');
     }
 
     driver.status = DriverStatus.BREAK;
+    await this.redisService.setDriverStatus(driver.id, 'offline');
+    await this.redisService.removeDriverGeoLocation(driver.id);
     return this.driversRepository.save(driver);
   }
 
-  async resume(userId:string){
-    const driver = await this.driversRepository.findOne({where:{userId}})
-    if(!driver){
-      throw new NotFoundException("driver not found")
+  async resume(userId: string) {
+    const driver = await this.driversRepository.findOne({ where: { userId } });
+    if (!driver) {
+      throw new NotFoundException('driver not found');
     }
 
     driver.status = DriverStatus.ONLINE;
+    await this.redisService.setDriverStatus(driver.id, 'available');
     return this.driversRepository.save(driver);
   }
 

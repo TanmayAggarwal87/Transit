@@ -25,21 +25,30 @@ import { PaymentMethod } from './payment-methods/entity/payment-method.entity';
 import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
 import { RidesModule } from './rides/rides.module';
 
+import { RedisModule } from './redis/redis.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    RedisModule,
     CacheModule.registerAsync({
       isGlobal: true,
-      useFactory: () => ({
-        stores: [
-          new Keyv({
-            store: new KeyvRedis('redis://localhost:6379'),
-            ttl: 5 * 60 * 1000, // 5 minutes in ms
-          }),
-        ],
-      }),
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const redisUrl =
+          configService.get<string>('REDIS_URL') ||
+          `redis://${configService.get<string>('REDIS_HOST', 'localhost')}:${configService.get<number>('REDIS_PORT', 6379)}`;
+        return {
+          stores: [
+            new Keyv({
+              store: new KeyvRedis(redisUrl),
+              ttl: 5 * 60 * 1000,
+            }),
+          ],
+        };
+      },
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
