@@ -154,6 +154,8 @@ export class PricingService {
         const response = await axios.get(
           `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${pickupLat},${pickupLng}&destinations=${destLat},${destLng}&key=${googleApiKey}`,
         );
+        console.log(response.data)
+        
 
         const element = response.data?.rows?.[0]?.elements?.[0];
         if (element && element.status === 'OK') {

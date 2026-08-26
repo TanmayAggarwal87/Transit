@@ -24,6 +24,8 @@ import { SavedPlace } from './saved-place/entity/saved-place.entity';
 import { PaymentMethod } from './payment-methods/entity/payment-method.entity';
 import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
 import { RidesModule } from './rides/rides.module';
+import { Ride } from './rides/entities/ride.entity';
+import { Fare } from './rides/entities/fare.entity';
 
 import { RedisModule } from './redis/redis.module';
 
@@ -65,6 +67,8 @@ import { RedisModule } from './redis/redis.module';
           BankAccount,
           SavedPlace,
           PaymentMethod,
+          Ride,
+          Fare,
         ],
         synchronize: true,
         ssl: true,
