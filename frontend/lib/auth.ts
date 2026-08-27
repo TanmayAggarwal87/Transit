@@ -34,7 +34,7 @@ export type VerifyOtpResponse =
 
 let cachedApiBaseUrl: string | null = null;
 
-const getApiBaseUrl = () => {
+export const getApiBaseUrl = () => {
   if (cachedApiBaseUrl) return cachedApiBaseUrl;
 
   const extra = Constants.expoConfig?.extra as { apiBaseUrl?: string } | undefined;

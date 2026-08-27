@@ -32,7 +32,13 @@ export default function RootLayout() {
             statusBarStyle: 'light',
             contentStyle: { backgroundColor: Colors.surfacePrimary }
           }} 
-        />
+        >
+          {/* Once authenticated, back/gesture must not pop back to sign-in */}
+          <Stack.Screen
+            name="(tabs)"
+            options={{ gestureEnabled: false, headerBackVisible: false }}
+          />
+        </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
