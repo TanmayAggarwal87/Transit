@@ -26,6 +26,7 @@ import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
 import { RidesModule } from './rides/rides.module';
 import { Ride } from './rides/entities/ride.entity';
 import { Fare } from './rides/entities/fare.entity';
+import { RideStatusHistory } from './rides/entities/ride-status-history.entity';
 
 import { RedisModule } from './redis/redis.module';
 
@@ -69,6 +70,7 @@ import { RedisModule } from './redis/redis.module';
           PaymentMethod,
           Ride,
           Fare,
+          RideStatusHistory,
         ],
         synchronize: true,
         ssl: true,
@@ -91,5 +93,6 @@ import { RedisModule } from './redis/redis.module';
   ],
   controllers: [AppController],
   providers: [AppService],
+  exports: [],
 })
 export class AppModule {}

@@ -5,8 +5,10 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToOne,
+  OneToMany,
 } from 'typeorm';
 import { Fare } from './fare.entity';
+import { RideStatusHistory } from './ride-status-history.entity';
 
 export enum RideStatus {
   REQUESTED = 'requested',
@@ -60,6 +62,9 @@ export class Ride {
 
   @OneToOne(() => Fare, (fare) => fare.ride, { cascade: true })
   fare!: Fare;
+
+  @OneToMany(() => RideStatusHistory, (history) => history.ride, { cascade: true })
+  statusHistory!: RideStatusHistory[];
 
   @CreateDateColumn()
   createdAt!: Date;

@@ -10,16 +10,17 @@ import { BankAccount } from './entities/bank-account.entity';
 import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
-   imports: [
+  imports: [
     TypeOrmModule.forFeature([
       Driver,
       DriverDocument,
       User,
-      BankAccount
+      BankAccount,
     ]),
     AuthModule,
   ],
   controllers: [DriversController],
-  providers: [DriversService, DriverDocumentsService]
+  providers: [DriversService, DriverDocumentsService],
+  exports: [DriversService],
 })
 export class DriversModule {}

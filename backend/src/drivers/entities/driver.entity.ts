@@ -71,6 +71,15 @@ export class Driver {
   })
   onboardingStatus!: DriverOnboardingStatus;
 
+  @Column({ type: 'double precision', name: 'current_lat', nullable: true })
+  currentLat!: number | null;
+
+  @Column({ type: 'double precision', name: 'current_lng', nullable: true })
+  currentLng!: number | null;
+
+  @Column({ type: 'timestamp', name: 'last_location_update', nullable: true })
+  lastLocationUpdate!: Date | null;
+
   @OneToMany(() => Vehicle, (vehicle) => vehicle.driver)
   vehicles!: Vehicle[];
 
