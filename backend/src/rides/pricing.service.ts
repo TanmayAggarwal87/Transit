@@ -20,6 +20,14 @@ export interface FareEstimateResult {
   estimates: FareCategoryEstimate[];
 }
 
+export interface FinalFareCalculation {
+  baseFare: number;
+  distanceFare: number;
+  durationFare: number;
+  surgeMultiplier: number;
+  finalTotal: number;
+}
+
 interface CategoryPricingConfig {
   displayName: string;
   baseFare: number;
@@ -138,10 +146,37 @@ export class PricingService {
   }
 
   /**
+   * Recalculate final fare after trip completion based on actual distance and duration.
+   */
+  calculateFinalFare(
+    category: string,
+    actualDistanceKm: number,
+    actualDurationMin: number,
+    surgeMultiplier: number = 1.0,
+  ): FinalFareCalculation {
+    const config = CATEGORY_PRICING[category] || CATEGORY_PRICING.hatchback;
+
+    const baseFare = config.baseFare;
+    const distanceFare = Math.round(actualDistanceKm * config.perKmRate * 10) / 10;
+    const durationFare = Math.round(actualDurationMin * config.perMinRate * 10) / 10;
+
+    const rawTotal = (baseFare + distanceFare + durationFare) * surgeMultiplier;
+    const finalTotal = Math.round(rawTotal);
+
+    return {
+      baseFare,
+      distanceFare,
+      durationFare,
+      surgeMultiplier,
+      finalTotal,
+    };
+  }
+
+  /**
    * Calculate distance (in km) and duration (in min) between coordinates.
    * Tries Google Maps Distance Matrix API / OSRM if configured, otherwise uses Haversine algorithm.
    */
-  private async calculateDistanceAndDuration(
+  async calculateDistanceAndDuration(
     pickupLat: number,
     pickupLng: number,
     destLat: number,
@@ -154,8 +189,6 @@ export class PricingService {
         const response = await axios.get(
           `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${pickupLat},${pickupLng}&destinations=${destLat},${destLng}&key=${googleApiKey}`,
         );
-        console.log(response.data)
-        
 
         const element = response.data?.rows?.[0]?.elements?.[0];
         if (element && element.status === 'OK') {

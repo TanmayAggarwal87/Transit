@@ -13,6 +13,7 @@ import { PricingService } from './pricing.service';
 import { EstimateFareDto } from './dto/estimate-fare.dto';
 import { CreateRideDto } from './dto/create-ride.dto';
 import { RejectRideDto } from './dto/reject-ride.dto';
+import { CompleteRideDto } from './dto/complete-ride.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/role.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -65,16 +66,7 @@ export class RidesController {
     @CurrentUser() user: any,
     @Param('id') rideId: string,
   ) {
-    let driverId = user.driverId;
-    if (!driverId) {
-      const driver = await this.driversService.findByUserId(user.userId);
-      driverId = driver?.id;
-    }
-
-    if (!driverId) {
-      throw new ForbiddenException('Driver profile not found');
-    }
-
+    const driverId = await this.resolveDriverId(user);
     return this.ridesService.acceptRide(driverId, rideId);
   }
 
@@ -90,6 +82,60 @@ export class RidesController {
     @Param('id') rideId: string,
     @Body() dto: RejectRideDto,
   ) {
+    const driverId = await this.resolveDriverId(user);
+    return this.ridesService.rejectRide(driverId, rideId, dto?.reason);
+  }
+
+  /**
+   * Protected Endpoint (Driver): Mark driver arrived at pickup location
+   */
+  @Post(':id/arrived')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('driver')
+  @HttpCode(HttpStatus.OK)
+  async driverArrived(
+    @CurrentUser() user: any,
+    @Param('id') rideId: string,
+  ) {
+    const driverId = await this.resolveDriverId(user);
+    return this.ridesService.driverArrived(driverId, rideId);
+  }
+
+  /**
+   * Protected Endpoint (Driver): Start the trip
+   */
+  @Post(':id/start')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('driver')
+  @HttpCode(HttpStatus.OK)
+  async startTrip(
+    @CurrentUser() user: any,
+    @Param('id') rideId: string,
+  ) {
+    const driverId = await this.resolveDriverId(user);
+    return this.ridesService.startTrip(driverId, rideId);
+  }
+
+  /**
+   * Protected Endpoint (Driver): Complete the trip
+   */
+  @Post(':id/complete')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('driver')
+  @HttpCode(HttpStatus.OK)
+  async completeTrip(
+    @CurrentUser() user: any,
+    @Param('id') rideId: string,
+    @Body() dto: CompleteRideDto,
+  ) {
+    const driverId = await this.resolveDriverId(user);
+    return this.ridesService.completeTrip(driverId, rideId, dto);
+  }
+
+  /**
+   * Helper to resolve driverId from JWT payload or database lookup
+   */
+  private async resolveDriverId(user: any): Promise<string> {
     let driverId = user.driverId;
     if (!driverId) {
       const driver = await this.driversService.findByUserId(user.userId);
@@ -100,6 +146,6 @@ export class RidesController {
       throw new ForbiddenException('Driver profile not found');
     }
 
-    return this.ridesService.rejectRide(driverId, rideId, dto?.reason);
+    return driverId;
   }
 }

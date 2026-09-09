@@ -1,11 +1,19 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Ride, RideStatus } from './entities/ride.entity';
 import { Fare } from './entities/fare.entity';
+import { Driver, DriverStatus } from 'src/drivers/entities/driver.entity';
 import { CreateRideDto } from './dto/create-ride.dto';
+import { CompleteRideDto } from './dto/complete-ride.dto';
 import { PricingService } from './pricing.service';
 import { MatchingService } from './matching.service';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class RidesService {
@@ -14,8 +22,11 @@ export class RidesService {
     private readonly rideRepository: Repository<Ride>,
     @InjectRepository(Fare)
     private readonly fareRepository: Repository<Fare>,
+    @InjectRepository(Driver)
+    private readonly driverRepository: Repository<Driver>,
     private readonly pricingService: PricingService,
     private readonly matchingService: MatchingService,
+    private readonly redisService: RedisService,
   ) {}
 
   /**
@@ -126,7 +137,167 @@ export class RidesService {
   }
 
   /**
-   * Get ride by ID
+   * Driver arrived at pickup location: updates status to DRIVER_ARRIVED
+   */
+  async driverArrived(driverId: string, rideId: string): Promise<Ride> {
+    const ride = await this.getRideById(rideId);
+
+    if (ride.driverId !== driverId) {
+      throw new BadRequestException('You are not the assigned driver for this ride');
+    }
+
+    if (ride.status !== RideStatus.DRIVER_ASSIGNED) {
+      throw new BadRequestException(
+        `Cannot mark arrived for ride in status '${ride.status}'`,
+      );
+    }
+
+    ride.status = RideStatus.DRIVER_ARRIVED;
+    const savedRide = await this.rideRepository.save(ride);
+
+    await this.matchingService.recordStatusHistory(
+      rideId,
+      RideStatus.DRIVER_ARRIVED,
+      driverId,
+      'Driver arrived at pickup location',
+    );
+
+    return savedRide;
+  }
+
+  /**
+   * Start the trip: updates status to IN_PROGRESS and records tripStartedAt
+   */
+  async startTrip(driverId: string, rideId: string): Promise<Ride> {
+    const ride = await this.getRideById(rideId);
+
+    if (ride.driverId !== driverId) {
+      throw new BadRequestException('You are not the assigned driver for this ride');
+    }
+
+    if (
+      ride.status !== RideStatus.DRIVER_ARRIVED &&
+      ride.status !== RideStatus.DRIVER_ASSIGNED
+    ) {
+      throw new BadRequestException(
+        `Cannot start trip for ride in status '${ride.status}'`,
+      );
+    }
+
+    ride.status = RideStatus.IN_PROGRESS;
+    ride.tripStartedAt = new Date();
+    const savedRide = await this.rideRepository.save(ride);
+
+    await this.redisService.setDriverStatus(driverId, 'on_trip');
+
+    await this.matchingService.recordStatusHistory(
+      rideId,
+      RideStatus.IN_PROGRESS,
+      driverId,
+      'Trip started by driver',
+    );
+
+    return savedRide;
+  }
+
+  /**
+   * Complete the trip: recalculates final fare, updates ride/fare rows, sets driver back to available and re-adds to Redis GEO
+   */
+  async completeTrip(
+    driverId: string,
+    rideId: string,
+    dto?: CompleteRideDto,
+  ): Promise<Ride> {
+    const ride = await this.getRideById(rideId);
+
+    if (ride.driverId !== driverId) {
+      throw new BadRequestException('You are not the assigned driver for this ride');
+    }
+
+    if (ride.status !== RideStatus.IN_PROGRESS) {
+      throw new BadRequestException(
+        `Cannot complete ride in status '${ride.status}'`,
+      );
+    }
+
+    // 1. Calculate actual duration in minutes
+    let actualDurationMin = dto?.actual_duration_min;
+    if (actualDurationMin === undefined || actualDurationMin === null) {
+      const startTime = ride.tripStartedAt
+        ? new Date(ride.tripStartedAt).getTime()
+        : Date.now();
+      const elapsedMs = Date.now() - startTime;
+      actualDurationMin = Math.max(1, Math.round((elapsedMs / 60000) * 10) / 10);
+    }
+
+    // 2. Calculate actual distance in km
+    let actualDistanceKm = dto?.actual_distance_km;
+    if (actualDistanceKm === undefined || actualDistanceKm === null) {
+      const dropLat = dto?.dest_lat ?? ride.destLat;
+      const dropLng = dto?.dest_lng ?? ride.destLng;
+      const route = await this.pricingService.calculateDistanceAndDuration(
+        ride.pickupLat,
+        ride.pickupLng,
+        dropLat,
+        dropLng,
+      );
+      actualDistanceKm = route.distanceKm;
+    }
+
+    // 3. Recalculate final fare
+    const finalFareCalc = this.pricingService.calculateFinalFare(
+      ride.category,
+      actualDistanceKm,
+      actualDurationMin,
+      ride.fare?.surgeMultiplier ?? 1.0,
+    );
+
+    // 4. Update Fare row
+    if (ride.fare) {
+      ride.fare.actualTotal = finalFareCalc.finalTotal;
+      ride.fare.distanceFare = finalFareCalc.distanceFare;
+      ride.fare.durationFare = finalFareCalc.durationFare;
+      await this.fareRepository.save(ride.fare);
+    }
+
+    // 5. Update Ride row
+    ride.status = RideStatus.COMPLETED;
+    ride.tripCompletedAt = new Date();
+    ride.actualDistanceKm = Math.round(actualDistanceKm * 10) / 10;
+    ride.actualDurationMin = Math.round(actualDurationMin * 10) / 10;
+    if (dto?.dest_lat) ride.destLat = dto.dest_lat;
+    if (dto?.dest_lng) ride.destLng = dto.dest_lng;
+
+    const savedRide = await this.rideRepository.save(ride);
+
+    // 6. Record status history
+    await this.matchingService.recordStatusHistory(
+      rideId,
+      RideStatus.COMPLETED,
+      driverId,
+      `Trip completed. Distance: ${ride.actualDistanceKm}km, Duration: ${ride.actualDurationMin}min, Final Fare: ₹${finalFareCalc.finalTotal}`,
+    );
+
+    // 7. Reset driver status to available and re-add to Redis GEO
+    const driver = await this.driverRepository.findOne({ where: { id: driverId } });
+    if (driver) {
+      driver.status = DriverStatus.ONLINE;
+      driver.currentLat = dto?.dest_lat ?? ride.destLat;
+      driver.currentLng = dto?.dest_lng ?? ride.destLng;
+      driver.lastLocationUpdate = new Date();
+      await this.driverRepository.save(driver);
+    }
+
+    await this.redisService.setDriverStatus(driverId, 'available');
+    const finalLat = dto?.dest_lat ?? ride.destLat;
+    const finalLng = dto?.dest_lng ?? ride.destLng;
+    await this.redisService.addDriverGeoLocation(driverId, finalLat, finalLng);
+
+    return savedRide;
+  }
+
+  /**
+   * Get ride by ID with relations
    */
   async getRideById(rideId: string): Promise<Ride> {
     const ride = await this.rideRepository.findOne({

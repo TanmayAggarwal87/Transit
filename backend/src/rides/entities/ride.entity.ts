@@ -60,6 +60,18 @@ export class Ride {
   })
   status!: RideStatus;
 
+  @Column({ type: 'timestamp', name: 'trip_started_at', nullable: true })
+  tripStartedAt!: Date | null;
+
+  @Column({ type: 'timestamp', name: 'trip_completed_at', nullable: true })
+  tripCompletedAt!: Date | null;
+
+  @Column({ type: 'double precision', name: 'actual_distance_km', nullable: true })
+  actualDistanceKm!: number | null;
+
+  @Column({ type: 'double precision', name: 'actual_duration_min', nullable: true })
+  actualDurationMin!: number | null;
+
   @OneToOne(() => Fare, (fare) => fare.ride, { cascade: true })
   fare!: Fare;
 
