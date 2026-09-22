@@ -1,7 +1,9 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -17,6 +19,8 @@ import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class RidesService {
+  private readonly logger = new Logger(RidesService.name);
+
   constructor(
     @InjectRepository(Ride)
     private readonly rideRepository: Repository<Ride>,
@@ -294,6 +298,110 @@ export class RidesService {
     await this.redisService.addDriverGeoLocation(driverId, finalLat, finalLng);
 
     return savedRide;
+  }
+
+  /**
+   * Cancel a ride request (by rider or driver).
+   * Checks if cancellation fee applies (if driver was already en route/arrived).
+   * Updates ride status to CANCELLED.
+   * If driver was assigned, sets driver back to available and re-adds to Redis GEO.
+   * Records cancellation in RideStatusHistory and emits Kafka event hook.
+   */
+  async cancelRide(
+    userId: string,
+    rideId: string,
+    reason?: string,
+  ): Promise<Ride & { cancellationFee: number }> {
+    const ride = await this.getRideById(rideId);
+
+    if (
+      ride.status === RideStatus.COMPLETED ||
+      ride.status === RideStatus.CANCELLED
+    ) {
+      throw new BadRequestException(
+        `Cannot cancel ride with status '${ride.status}'`,
+      );
+    }
+
+    // Determine whether caller is rider or driver
+    const isRider = ride.riderId === userId;
+    let isDriver = false;
+
+    if (ride.driverId) {
+      const driver = await this.driverRepository.findOne({
+        where: { id: ride.driverId },
+      });
+      if (driver && (driver.id === userId || driver.userId === userId)) {
+        isDriver = true;
+      }
+    }
+
+    if (!isRider && !isDriver) {
+      throw new ForbiddenException(
+        'You are not authorized to cancel this ride',
+      );
+    }
+
+    const cancelledBy = isRider ? 'rider' : 'driver';
+
+    // Cancellation fee applies if rider cancels when driver was already assigned or arrived
+    let cancellationFee = 0;
+    if (
+      isRider &&
+      (ride.status === RideStatus.DRIVER_ASSIGNED ||
+        ride.status === RideStatus.DRIVER_ARRIVED ||
+        ride.status === RideStatus.IN_PROGRESS)
+    ) {
+      cancellationFee = 50;
+      if (ride.fare) {
+        ride.fare.actualTotal = cancellationFee;
+        await this.fareRepository.save(ride.fare);
+      }
+      this.logger.log(
+        `Processed cancellation fee payment of ₹${cancellationFee} for ride ${rideId}`,
+      );
+    }
+
+    // Update ride status to CANCELLED
+    ride.status = RideStatus.CANCELLED;
+    const savedRide = await this.rideRepository.save(ride);
+
+    // If driver was assigned, reset driver status to available & re-add to Redis GEO
+    if (ride.driverId) {
+      const driver = await this.driverRepository.findOne({
+        where: { id: ride.driverId },
+      });
+      if (driver) {
+        driver.status = DriverStatus.ONLINE;
+        await this.driverRepository.save(driver);
+        if (driver.currentLat != null && driver.currentLng != null) {
+          await this.redisService.addDriverGeoLocation(
+            driver.id,
+            driver.currentLat,
+            driver.currentLng,
+          );
+        }
+      }
+      await this.redisService.setDriverStatus(ride.driverId, 'available');
+    }
+
+    // Clear pending dispatch cache
+    await this.redisService.invalidateRideCache(`dispatch:pending:${rideId}`);
+
+    // Record in RideStatusHistory
+    await this.matchingService.recordStatusHistory(
+      rideId,
+      RideStatus.CANCELLED,
+      isRider ? ride.riderId : ride.driverId || userId,
+      `Ride cancelled by ${cancelledBy}. Reason: ${reason || 'Not specified'}. Fee: ₹${cancellationFee}`,
+    );
+
+    // Emit ride.cancelled Kafka event (Phase 5 hook)
+    this.logger.log(
+      `[Kafka: transit.ride.cancelled] Ride ${rideId} cancelled by ${cancelledBy}. Fee: ₹${cancellationFee}`,
+    );
+
+    return Object.assign(savedRide, { cancellationFee });
   }
 
   /**

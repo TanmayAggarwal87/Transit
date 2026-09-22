@@ -77,6 +77,9 @@ export class Driver {
   @Column({ type: 'double precision', name: 'current_lng', nullable: true })
   currentLng!: number | null;
 
+  @Column({ type: 'double precision', nullable: true })
+  heading!: number | null;
+
   @Column({ type: 'timestamp', name: 'last_location_update', nullable: true })
   lastLocationUpdate!: Date | null;
 

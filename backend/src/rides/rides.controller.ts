@@ -14,6 +14,7 @@ import { EstimateFareDto } from './dto/estimate-fare.dto';
 import { CreateRideDto } from './dto/create-ride.dto';
 import { RejectRideDto } from './dto/reject-ride.dto';
 import { CompleteRideDto } from './dto/complete-ride.dto';
+import { CancelRideDto } from './dto/cancel-ride.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/role.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -130,6 +131,20 @@ export class RidesController {
   ) {
     const driverId = await this.resolveDriverId(user);
     return this.ridesService.completeTrip(driverId, rideId, dto);
+  }
+
+  /**
+   * Protected Endpoint (Rider or Driver): Cancel a ride request
+   */
+  @Post(':id/cancel')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async cancelRide(
+    @CurrentUser() user: any,
+    @Param('id') rideId: string,
+    @Body() dto?: CancelRideDto,
+  ) {
+    return this.ridesService.cancelRide(user.userId, rideId, dto?.reason);
   }
 
   /**

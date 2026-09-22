@@ -7,6 +7,7 @@ import { Driver } from './entities/driver.entity';
 import { DriverDocument } from './entities/driver-document.entity';
 import { User } from 'src/users/entities/user.entity';
 import { BankAccount } from './entities/bank-account.entity';
+import { DriverLocationHistory } from './entities/driver-location-history.entity';
 import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
@@ -16,6 +17,7 @@ import { AuthModule } from 'src/auth/auth.module';
       DriverDocument,
       User,
       BankAccount,
+      DriverLocationHistory,
     ]),
     AuthModule,
   ],

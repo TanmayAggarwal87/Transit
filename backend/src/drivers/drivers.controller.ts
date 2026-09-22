@@ -9,6 +9,8 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { DriverPersonalInfo } from 'src/drivers/dto/driverPersonalDetails.dto';
@@ -23,6 +25,7 @@ import { CurrentUser } from 'src/auth/decorators/current-users.decorator';
 import { UpdateDriverProfileDto } from 'src/drivers/dto/update-driver.dto';
 import { AddBankAccountDto, UpdateBankAccountDto } from 'src/drivers/dto/bank-account.dto';
 import { UploadDocumentDto } from './dto/upload-document.dto';
+import { UpdateDriverLocationDto } from './dto/update-location.dto';
 
 @Controller('drivers')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -96,6 +99,19 @@ export class DriversController {
     @Roles("driver")
     resume(@CurrentUser() user: any){
         return this.driverService.resume(user.userId);
+    }
+
+    /**
+     * Driver sends GPS ping
+     */
+    @Post("me/location")
+    @Roles("driver")
+    @HttpCode(HttpStatus.OK)
+    updateLocation(
+      @CurrentUser() user: any,
+      @Body() dto: UpdateDriverLocationDto,
+    ) {
+      return this.driverService.updateDriverLocation(user.userId, dto);
     }
 
     /* Document Upload Endpoints */

@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,16 +12,22 @@ import { Driver, DriverOnboardingStatus, DriverStatus } from './entities/driver.
 import { UpdateDriverProfileDto } from 'src/drivers/dto/update-driver.dto';
 import { AddBankAccountDto, UpdateBankAccountDto } from 'src/drivers/dto/bank-account.dto';
 import { BankAccount } from './entities/bank-account.entity';
+import { DriverLocationHistory } from './entities/driver-location-history.entity';
+import { UpdateDriverLocationDto } from './dto/update-location.dto';
 import { DriverDocumentsService } from './driver-documents.service';
 import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class DriversService {
+  private readonly logger = new Logger(DriversService.name);
+
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
     @InjectRepository(Driver)
     private readonly driversRepository: Repository<Driver>,
     @InjectRepository(BankAccount) private driverBankAccount :Repository<BankAccount>,
+    @InjectRepository(DriverLocationHistory)
+    private readonly driverLocationHistoryRepo: Repository<DriverLocationHistory>,
     private driverDocumentsService : DriverDocumentsService,
     private redisService: RedisService,
   ) {}
@@ -157,6 +164,14 @@ export class DriversService {
     if (driver.status === DriverStatus.OFFLINE) {
       driver.status = DriverStatus.ONLINE;
       await this.redisService.setDriverStatus(driver.id, 'available');
+      if (driver.currentLat != null && driver.currentLng != null) {
+        await this.redisService.setDriverLocation(
+          driver.id,
+          driver.currentLat,
+          driver.currentLng,
+          driver.heading || 0,
+        );
+      }
     } else if (driver.status === DriverStatus.ONLINE) {
       driver.status = DriverStatus.OFFLINE;
       await this.redisService.setDriverStatus(driver.id, 'offline');
@@ -217,4 +232,59 @@ export class DriversService {
     return this.driverDocumentsService.getSignedViewUrl(documentId, userId);
   }
 
+  /**
+   * Update driver location from GPS ping.
+   * Updates drivers table, Redis Hash, Redis GEO index.
+   * If driver has active ride: inserts DriverLocationHistory row and triggers WS hook.
+   */
+  async updateDriverLocation(
+    userId: string,
+    dto: UpdateDriverLocationDto,
+  ): Promise<{ success: boolean; driverId: string; lat: number; lng: number }> {
+    const driver = await this.driversRepository.findOne({ where: { userId } });
+    if (!driver) {
+      throw new NotFoundException('Driver profile not found');
+    }
+
+    driver.currentLat = dto.lat;
+    driver.currentLng = dto.lng;
+    if (dto.heading !== undefined && dto.heading !== null) {
+      driver.heading = dto.heading;
+    }
+    driver.lastLocationUpdate = new Date();
+    await this.driversRepository.save(driver);
+
+    // Update Redis GEO index and Hash
+    await this.redisService.setDriverLocation(
+      driver.id,
+      dto.lat,
+      dto.lng,
+      dto.heading ?? 0,
+    );
+
+    // If driver has active ride: insert DriverLocationHistory and trigger Phase 6 WS hook
+    if (dto.ride_id) {
+      const history = this.driverLocationHistoryRepo.create({
+        driverId: driver.id,
+        rideId: dto.ride_id,
+        lat: dto.lat,
+        lng: dto.lng,
+        heading: dto.heading ?? null,
+        speedKmh: dto.speed_kmh ?? null,
+      });
+      await this.driverLocationHistoryRepo.save(history);
+
+      // WebSocket push hook for Phase 6
+      this.logger.log(
+        `[WebSocket: ride:${dto.ride_id}:location] Driver ${driver.id} location: ${dto.lat}, ${dto.lng}, heading: ${dto.heading ?? 0}`,
+      );
+    }
+
+    return {
+      success: true,
+      driverId: driver.id,
+      lat: dto.lat,
+      lng: dto.lng,
+    };
+  }
 }

@@ -17,6 +17,7 @@ import { Vehicle } from './drivers/entities/vehicle.entity';
 import { DriverDocument } from './drivers/entities/driver-document.entity';
 import { VehicleDocument } from './drivers/entities/vehicle-document.entity';
 import { BankAccount } from './drivers/entities/bank-account.entity';
+import { DriverLocationHistory } from './drivers/entities/driver-location-history.entity';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { AdminModule } from './admin/admin.module';
 import { SavedPlaceModule } from './saved-place/saved-place.module';
@@ -71,6 +72,7 @@ import { RedisModule } from './redis/redis.module';
           Ride,
           Fare,
           RideStatusHistory,
+          DriverLocationHistory,
         ],
         synchronize: true,
         ssl: true,
