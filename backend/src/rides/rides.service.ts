@@ -16,6 +16,8 @@ import { CompleteRideDto } from './dto/complete-ride.dto';
 import { PricingService } from './pricing.service';
 import { MatchingService } from './matching.service';
 import { RedisService } from 'src/redis/redis.service';
+import { EventsService } from 'src/kafka/events.service';
+import { KafkaTopic } from 'src/kafka/kafka.constants';
 
 @Injectable()
 export class RidesService {
@@ -31,6 +33,7 @@ export class RidesService {
     private readonly pricingService: PricingService,
     private readonly matchingService: MatchingService,
     private readonly redisService: RedisService,
+    private readonly eventsService: EventsService,
   ) {}
 
   /**
@@ -119,6 +122,19 @@ export class RidesService {
       savedRide.status = RideStatus.SEARCHING;
     }
 
+    // Emit ride.requested event to Kafka
+    await this.eventsService.emit(KafkaTopic.RIDE_REQUESTED, {
+      rideId: savedRide.id,
+      riderId,
+      pickupLat: savedRide.pickupLat,
+      pickupLng: savedRide.pickupLng,
+      destLat: savedRide.destLat,
+      destLng: savedRide.destLng,
+      category: savedRide.category,
+      estimatedTotal: savedFare.estimatedTotal,
+      status: savedRide.status,
+    });
+
     return savedRide;
   }
 
@@ -200,6 +216,15 @@ export class RidesService {
       driverId,
       'Trip started by driver',
     );
+
+    // Emit ride.started event to Kafka
+    await this.eventsService.emit(KafkaTopic.RIDE_STARTED, {
+      rideId: savedRide.id,
+      driverId,
+      riderId: savedRide.riderId,
+      tripStartedAt: savedRide.tripStartedAt,
+      status: savedRide.status,
+    });
 
     return savedRide;
   }
@@ -296,6 +321,18 @@ export class RidesService {
     const finalLat = dto?.dest_lat ?? ride.destLat;
     const finalLng = dto?.dest_lng ?? ride.destLng;
     await this.redisService.addDriverGeoLocation(driverId, finalLat, finalLng);
+
+    // Emit ride.completed event to Kafka
+    await this.eventsService.emit(KafkaTopic.RIDE_COMPLETED, {
+      rideId: savedRide.id,
+      driverId,
+      riderId: savedRide.riderId,
+      actualDistanceKm: savedRide.actualDistanceKm,
+      actualDurationMin: savedRide.actualDurationMin,
+      finalTotal: finalFareCalc.finalTotal,
+      tripCompletedAt: savedRide.tripCompletedAt,
+      status: savedRide.status,
+    });
 
     return savedRide;
   }
@@ -396,10 +433,16 @@ export class RidesService {
       `Ride cancelled by ${cancelledBy}. Reason: ${reason || 'Not specified'}. Fee: ₹${cancellationFee}`,
     );
 
-    // Emit ride.cancelled Kafka event (Phase 5 hook)
-    this.logger.log(
-      `[Kafka: transit.ride.cancelled] Ride ${rideId} cancelled by ${cancelledBy}. Fee: ₹${cancellationFee}`,
-    );
+    // Emit ride.cancelled Kafka event
+    await this.eventsService.emit(KafkaTopic.RIDE_CANCELLED, {
+      rideId: savedRide.id,
+      riderId: savedRide.riderId,
+      driverId: savedRide.driverId,
+      cancelledBy,
+      reason: reason || 'Not specified',
+      cancellationFee,
+      status: savedRide.status,
+    });
 
     return Object.assign(savedRide, { cancellationFee });
   }

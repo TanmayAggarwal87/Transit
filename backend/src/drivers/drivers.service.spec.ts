@@ -8,6 +8,8 @@ import { User } from 'src/users/entities/user.entity';
 import { BankAccount } from './entities/bank-account.entity';
 import { DriverDocumentsService } from './driver-documents.service';
 import { RedisService } from 'src/redis/redis.service';
+import { EventsService } from 'src/kafka/events.service';
+import { KafkaTopic } from 'src/kafka/kafka.constants';
 
 describe('DriversService', () => {
   let service: DriversService;
@@ -17,6 +19,7 @@ describe('DriversService', () => {
   let driverLocationHistoryRepo: any;
   let driverDocumentsService: any;
   let redisService: any;
+  let eventsService: any;
 
   beforeEach(async () => {
     driverRepo = {
@@ -46,6 +49,9 @@ describe('DriversService', () => {
       removeDriverGeoLocation: jest.fn(),
       setDriverLocation: jest.fn(),
     };
+    eventsService = {
+      emit: jest.fn().mockResolvedValue({}),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -59,6 +65,7 @@ describe('DriversService', () => {
         },
         { provide: DriverDocumentsService, useValue: driverDocumentsService },
         { provide: RedisService, useValue: redisService },
+        { provide: EventsService, useValue: eventsService },
       ],
     }).compile();
 
@@ -98,6 +105,14 @@ describe('DriversService', () => {
         90,
       );
       expect(driverLocationHistoryRepo.create).not.toHaveBeenCalled();
+      expect(eventsService.emit).toHaveBeenCalledWith(
+        KafkaTopic.DRIVER_LOCATION_UPDATED,
+        expect.objectContaining({
+          driverId: 'driver-1',
+          lat: 12.9716,
+          lng: 77.5946,
+        }),
+      );
     });
 
     it('should record DriverLocationHistory when ride_id is provided', async () => {

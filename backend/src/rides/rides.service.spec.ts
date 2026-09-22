@@ -8,6 +8,8 @@ import { Driver, DriverStatus } from 'src/drivers/entities/driver.entity';
 import { PricingService } from './pricing.service';
 import { MatchingService } from './matching.service';
 import { RedisService } from 'src/redis/redis.service';
+import { EventsService } from 'src/kafka/events.service';
+import { KafkaTopic } from 'src/kafka/kafka.constants';
 
 describe('RidesService', () => {
   let service: RidesService;
@@ -16,6 +18,7 @@ describe('RidesService', () => {
   let driverRepo: any;
   let redisService: any;
   let matchingService: any;
+  let eventsService: any;
 
   beforeEach(async () => {
     rideRepo = {
@@ -41,6 +44,9 @@ describe('RidesService', () => {
       findNearestAvailableDriver: jest.fn(),
       dispatchToDriver: jest.fn(),
     };
+    eventsService = {
+      emit: jest.fn().mockResolvedValue({}),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -51,6 +57,7 @@ describe('RidesService', () => {
         { provide: PricingService, useValue: {} },
         { provide: MatchingService, useValue: matchingService },
         { provide: RedisService, useValue: redisService },
+        { provide: EventsService, useValue: eventsService },
       ],
     }).compile();
 
@@ -78,6 +85,13 @@ describe('RidesService', () => {
       expect(result.status).toBe(RideStatus.CANCELLED);
       expect(result.cancellationFee).toBe(0);
       expect(matchingService.recordStatusHistory).toHaveBeenCalled();
+      expect(eventsService.emit).toHaveBeenCalledWith(
+        KafkaTopic.RIDE_CANCELLED,
+        expect.objectContaining({
+          rideId: 'ride-1',
+          cancelledBy: 'rider',
+        }),
+      );
     });
 
     it('should charge cancellation fee when rider cancels after driver is assigned', async () => {

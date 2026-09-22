@@ -16,6 +16,8 @@ import { DriverLocationHistory } from './entities/driver-location-history.entity
 import { UpdateDriverLocationDto } from './dto/update-location.dto';
 import { DriverDocumentsService } from './driver-documents.service';
 import { RedisService } from 'src/redis/redis.service';
+import { EventsService } from 'src/kafka/events.service';
+import { KafkaTopic } from 'src/kafka/kafka.constants';
 
 @Injectable()
 export class DriversService {
@@ -30,6 +32,7 @@ export class DriversService {
     private readonly driverLocationHistoryRepo: Repository<DriverLocationHistory>,
     private driverDocumentsService : DriverDocumentsService,
     private redisService: RedisService,
+    private readonly eventsService: EventsService,
   ) {}
 
   async register(userId: string, driverInfo: DriverPersonalInfo) {
@@ -279,6 +282,16 @@ export class DriversService {
         `[WebSocket: ride:${dto.ride_id}:location] Driver ${driver.id} location: ${dto.lat}, ${dto.lng}, heading: ${dto.heading ?? 0}`,
       );
     }
+
+    // Emit driver.location_updated event to Kafka
+    await this.eventsService.emit(KafkaTopic.DRIVER_LOCATION_UPDATED, {
+      driverId: driver.id,
+      lat: dto.lat,
+      lng: dto.lng,
+      heading: dto.heading ?? 0,
+      speedKmh: dto.speed_kmh,
+      rideId: dto.ride_id,
+    });
 
     return {
       success: true,

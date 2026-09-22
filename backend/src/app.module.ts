@@ -30,6 +30,7 @@ import { Fare } from './rides/entities/fare.entity';
 import { RideStatusHistory } from './rides/entities/ride-status-history.entity';
 
 import { RedisModule } from './redis/redis.module';
+import { KafkaModule } from './kafka/kafka.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { RedisModule } from './redis/redis.module';
       isGlobal: true,
     }),
     RedisModule,
+    KafkaModule,
     CacheModule.registerAsync({
       isGlobal: true,
       inject: [ConfigService],

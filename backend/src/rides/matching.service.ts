@@ -11,6 +11,8 @@ import { RideStatusHistory } from './entities/ride-status-history.entity';
 import { Driver, DriverOnboardingStatus, DriverStatus } from 'src/drivers/entities/driver.entity';
 import { FuelType } from 'src/drivers/entities/vehicle.entity';
 import { RedisService } from 'src/redis/redis.service';
+import { EventsService } from 'src/kafka/events.service';
+import { KafkaTopic } from 'src/kafka/kafka.constants';
 
 export interface DriverMatchResult {
   driver: Driver;
@@ -29,6 +31,7 @@ export class MatchingService {
     @InjectRepository(RideStatusHistory)
     private readonly statusHistoryRepository: Repository<RideStatusHistory>,
     private readonly redisService: RedisService,
+    private readonly eventsService: EventsService,
   ) {}
 
   /**
@@ -176,6 +179,14 @@ export class MatchingService {
 
     // Clear pending dispatch
     await this.redisService.invalidateRideCache(`dispatch:pending:${rideId}`);
+
+    // Emit ride.accepted event to Kafka
+    await this.eventsService.emit(KafkaTopic.RIDE_ACCEPTED, {
+      rideId: savedRide.id,
+      driverId,
+      riderId: savedRide.riderId,
+      status: savedRide.status,
+    });
 
     return savedRide;
   }
