@@ -25,6 +25,6 @@ import { JWT_SECRET, JWT_EXPIRATION } from './constants/jwt.constants';
   ],
   providers: [AuthService, JwtStrategy, RateLimitService, SmsService, RolesGuard, VerifiedDriverGuard],
   controllers: [AuthController],
-  exports: [RolesGuard, VerifiedDriverGuard],
+  exports: [RolesGuard, VerifiedDriverGuard, JwtModule],
 })
 export class AuthModule {}

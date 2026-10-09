@@ -4,6 +4,7 @@ export enum KafkaTopic {
   RIDE_STARTED = 'transit.ride.started',
   RIDE_COMPLETED = 'transit.ride.completed',
   RIDE_CANCELLED = 'transit.ride.cancelled',
+  RIDE_STATUS_UPDATED = 'transit.ride.status_updated',
   DRIVER_LOCATION_UPDATED = 'transit.driver.location_updated',
   PAYMENT_COMPLETED = 'transit.payment.completed',
   SOS_TRIGGERED = 'transit.sos.triggered',

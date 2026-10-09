@@ -9,6 +9,8 @@ import { Consumer, Kafka } from 'kafkajs';
 import { EventEnvelope, KafkaTopic } from './kafka.constants';
 import { PaymentsService } from './services/payments.service';
 import { RideAnalyticsService } from './services/ride-analytics.service';
+import { Optional } from '@nestjs/common';
+import { RealtimeService } from 'src/realtime/realtime.service';
 
 @Injectable()
 export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
@@ -21,6 +23,7 @@ export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
     private readonly configService: ConfigService,
     private readonly paymentsService: PaymentsService,
     private readonly analyticsService: RideAnalyticsService,
+    @Optional() private readonly realtimeService?: RealtimeService,
   ) {
     const brokers = (
       this.configService.get<string>('KAFKA_BROKERS') || 'localhost:9092'
@@ -44,6 +47,10 @@ export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
       await this.consumer.subscribe({
         topics: [
           KafkaTopic.RIDE_COMPLETED,
+          KafkaTopic.RIDE_ACCEPTED,
+          KafkaTopic.RIDE_STARTED,
+          KafkaTopic.RIDE_CANCELLED,
+          KafkaTopic.RIDE_STATUS_UPDATED,
           KafkaTopic.DRIVER_LOCATION_UPDATED,
         ],
         fromBeginning: false,
@@ -87,12 +94,66 @@ export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
       const data = envelope.data || {};
 
       switch (topic) {
+        case KafkaTopic.RIDE_ACCEPTED: {
+          const { rideId, driverId, status } = data;
+          if (rideId) {
+            this.realtimeService?.emitToRide(rideId, 'ride:driver_assigned', {
+              rideId,
+              driverId,
+              status,
+            });
+            this.realtimeService?.emitToRide(rideId, 'ride:status_update', {
+              rideId,
+              status,
+            });
+          }
+          break;
+        }
+
+        case KafkaTopic.RIDE_STARTED: {
+          const { rideId, status } = data;
+          if (rideId) {
+            this.realtimeService?.emitToRide(rideId, 'ride:status_update', {
+              rideId,
+              status,
+            });
+          }
+          break;
+        }
+
+        case KafkaTopic.RIDE_STATUS_UPDATED: {
+          const { rideId, status } = data;
+          if (rideId) {
+            this.realtimeService?.emitToRide(rideId, 'ride:status_update', {
+              rideId,
+              status,
+            });
+          }
+          break;
+        }
+
         case KafkaTopic.RIDE_COMPLETED: {
           const rideId = data.rideId;
           if (rideId) {
             this.logger.log(`[Kafka Consumer] Processing ride completion for ride ${rideId}`);
+            this.realtimeService?.emitToRide(rideId, 'ride:completed', data);
+            this.realtimeService?.emitToRide(rideId, 'ride:status_update', {
+              rideId,
+              status: data.status,
+            });
             await this.paymentsService.processRidePayment(rideId);
             await this.analyticsService.writeAnalytics(rideId);
+          }
+          break;
+        }
+
+        case KafkaTopic.RIDE_CANCELLED: {
+          const { rideId, status } = data;
+          if (rideId) {
+            this.realtimeService?.emitToRide(rideId, 'ride:status_update', {
+              rideId,
+              status,
+            });
           }
           break;
         }
@@ -102,11 +163,14 @@ export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
           this.logger.log(
             `[Kafka Consumer] Driver ${driverId} location update: (${lat}, ${lng})${rideId ? ` for ride ${rideId}` : ''}`,
           );
-          // Phase 6 WebSocket fanout hook:
           if (rideId) {
-            this.logger.log(
-              `[WebSocket Fanout] Emitting location to room 'ride:${rideId}'`,
-            );
+            this.realtimeService?.emitToRide(rideId, 'ride:driver_location', {
+              driverId,
+              lat,
+              lng,
+              heading: data.heading ?? 0,
+              eta: data.eta ?? null,
+            });
           }
           break;
         }

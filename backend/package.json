@@ -33,7 +33,10 @@
     "@nestjs/microservices": "^11.2.5",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.1.26",
+    "@nestjs/platform-socket.io": "^11.2.7",
     "@nestjs/typeorm": "^11.0.1",
+    "@nestjs/websockets": "^11.2.7",
+    "@socket.io/redis-adapter": "^8.3.0",
     "axios": "^1.14.0",
     "better-sqlite3": "^12.8.0",
     "cache-manager": "^7.2.8",
@@ -51,6 +54,7 @@
     "redis": "^5.11.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "socket.io": "^4.8.4",
     "typeorm": "^0.3.28",
     "uuid": "^14.0.0"
   },

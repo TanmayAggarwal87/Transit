@@ -182,6 +182,13 @@ export class RidesService {
       'Driver arrived at pickup location',
     );
 
+    await this.eventsService.emit(KafkaTopic.RIDE_STATUS_UPDATED, {
+      rideId: savedRide.id,
+      driverId,
+      riderId: savedRide.riderId,
+      status: savedRide.status,
+    });
+
     return savedRide;
   }
 

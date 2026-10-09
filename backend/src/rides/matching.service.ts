@@ -13,6 +13,7 @@ import { FuelType } from 'src/drivers/entities/vehicle.entity';
 import { RedisService } from 'src/redis/redis.service';
 import { EventsService } from 'src/kafka/events.service';
 import { KafkaTopic } from 'src/kafka/kafka.constants';
+import { RealtimeService } from 'src/realtime/realtime.service';
 
 export interface DriverMatchResult {
   driver: Driver;
@@ -32,6 +33,7 @@ export class MatchingService {
     private readonly statusHistoryRepository: Repository<RideStatusHistory>,
     private readonly redisService: RedisService,
     private readonly eventsService: EventsService,
+    private readonly realtimeService: RealtimeService,
   ) {}
 
   /**
@@ -122,6 +124,16 @@ export class MatchingService {
       { driverId, dispatchedAt: Date.now() },
       30,
     );
+
+    this.realtimeService.emitToDriver(driverId, 'driver:dispatch_request', {
+      rideId: ride.id,
+      pickupLat: ride.pickupLat,
+      pickupLng: ride.pickupLng,
+      pickupAddress: ride.pickupAddress,
+      destLat: ride.destLat,
+      destLng: ride.destLng,
+      category: ride.category,
+    });
 
     this.logger.log(`Ride ${rideId} dispatched to driver ${driverId}`);
     return true;

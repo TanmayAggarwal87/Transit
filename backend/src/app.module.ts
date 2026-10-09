@@ -31,6 +31,7 @@ import { RideStatusHistory } from './rides/entities/ride-status-history.entity';
 
 import { RedisModule } from './redis/redis.module';
 import { KafkaModule } from './kafka/kafka.module';
+import { RealtimeModule } from './realtime/realtime.module';
 
 @Module({
   imports: [
@@ -94,6 +95,7 @@ import { KafkaModule } from './kafka/kafka.module';
     VehiclesModule,
     AdminModule,
     RidesModule,
+    RealtimeModule,
   ],
   controllers: [AppController],
   providers: [AppService],
