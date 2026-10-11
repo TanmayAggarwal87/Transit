@@ -32,6 +32,10 @@ import { RideStatusHistory } from './rides/entities/ride-status-history.entity';
 import { RedisModule } from './redis/redis.module';
 import { KafkaModule } from './kafka/kafka.module';
 import { RealtimeModule } from './realtime/realtime.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { Payment } from './payments/entities/payment.entity';
+import { DriverEarning } from './payments/entities/driver-earning.entity';
+import { DriverPayout } from './payments/entities/driver-payout.entity';
 
 @Module({
   imports: [
@@ -40,6 +44,7 @@ import { RealtimeModule } from './realtime/realtime.module';
     }),
     RedisModule,
     KafkaModule,
+    ScheduleModule.forRoot(),
     CacheModule.registerAsync({
       isGlobal: true,
       inject: [ConfigService],
@@ -76,6 +81,9 @@ import { RealtimeModule } from './realtime/realtime.module';
           Fare,
           RideStatusHistory,
           DriverLocationHistory,
+          Payment,
+          DriverEarning,
+          DriverPayout,
         ],
         synchronize: true,
         ssl: true,

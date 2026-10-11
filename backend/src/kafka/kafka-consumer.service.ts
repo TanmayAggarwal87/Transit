@@ -7,7 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Consumer, Kafka } from 'kafkajs';
 import { EventEnvelope, KafkaTopic } from './kafka.constants';
-import { PaymentsService } from './services/payments.service';
+import { PaymentsService } from '../payments/payments.service';
 import { RideAnalyticsService } from './services/ride-analytics.service';
 import { Optional } from '@nestjs/common';
 import { RealtimeService } from 'src/realtime/realtime.service';

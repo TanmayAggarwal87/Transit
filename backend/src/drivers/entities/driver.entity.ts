@@ -77,6 +77,9 @@ export class Driver {
   @Column({ type: 'double precision', name: 'current_lng', nullable: true })
   currentLng!: number | null;
 
+  @Column({ type: 'numeric', name: 'total_earnings', precision: 12, scale: 2, default: 0 })
+  totalEarnings!: string;
+
   @Column({ type: 'double precision', nullable: true })
   heading!: number | null;
 

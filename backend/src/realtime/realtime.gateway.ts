@@ -117,6 +117,7 @@ export class RealtimeGateway
 
       client.data.userId = payload.sub;
       client.data.roles = this.parseRoles(payload.roles);
+      await client.join(`user:${payload.sub}`);
 
       const driver = await this.driversService.findByUserId(payload.sub);
       if (driver) {

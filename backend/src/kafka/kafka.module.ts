@@ -1,17 +1,16 @@
 import { Global, Module } from '@nestjs/common';
-import { EventsService } from './events.service';
+import { EventsModule } from './events.module';
 import { KafkaConsumerService } from './kafka-consumer.service';
-import { PaymentsService } from './services/payments.service';
 import { RideAnalyticsService } from './services/ride-analytics.service';
+import { PaymentsModule } from '../payments/payments.module';
 
 @Global()
 @Module({
+  imports: [EventsModule, PaymentsModule],
   providers: [
-    EventsService,
     KafkaConsumerService,
-    PaymentsService,
     RideAnalyticsService,
   ],
-  exports: [EventsService, PaymentsService, RideAnalyticsService],
+  exports: [EventsModule, RideAnalyticsService],
 })
 export class KafkaModule {}

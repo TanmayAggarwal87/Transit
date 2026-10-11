@@ -16,4 +16,8 @@ export class RealtimeService {
   emitToDriver(driverId: string, event: string, payload: unknown): void {
     this.server?.to(`driver:${driverId}`).emit(event, payload);
   }
+
+  emitToUser(userId: string, event: string, payload: unknown): void {
+    this.server?.to(`user:${userId}`).emit(event, payload);
+  }
 }
