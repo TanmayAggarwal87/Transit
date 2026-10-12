@@ -1,12 +1,49 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, RefreshControl } from 'react-native';
 import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { useAuthStore } from '@/store/auth';
+import { deletePaymentMethod, getApiMessage, getPaymentHistory, getPaymentMethods, PaymentHistoryItem, PaymentMethod, setDefaultPaymentMethod } from '@/lib/account';
+import { useFocusEffect } from 'expo-router';
 
 export default function WalletScreen() {
   const insets = useSafeAreaInsets();
+  const token = useAuthStore((state) => state.accessToken);
+  const [methods, setMethods] = React.useState<PaymentMethod[]>([]);
+  const [history, setHistory] = React.useState<PaymentHistoryItem[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [refreshing, setRefreshing] = React.useState(false);
+  const load = React.useCallback(async (refresh = false) => {
+    if (!token) { setLoading(false); setError('Sign in to view your payment information.'); return; }
+    if (refresh) setRefreshing(true);
+    else setLoading(true);
+    setError(null);
+    try {
+      const [nextMethods, nextHistory] = await Promise.all([getPaymentMethods(token), getPaymentHistory(token)]);
+      setMethods(nextMethods); setHistory(nextHistory.items ?? []);
+    } catch (e) { setError(getApiMessage(e, 'Could not load payment information.')); }
+    finally { setLoading(false); setRefreshing(false); }
+  }, [token]);
+  useFocusEffect(React.useCallback(() => { void load(); }, [load]));
+  const chooseDefault = (method: PaymentMethod) => Alert.alert('Default payment method', 'Use this method for future rides?', [
+    { text: 'Cancel', style: 'cancel' }, { text: 'Set default', onPress: async () => {
+      if (!token) return;
+      try { await setDefaultPaymentMethod(token, method.id); await load(true); }
+      catch (e) { Alert.alert('Could not update method', getApiMessage(e, 'Please try again.')); }
+    } },
+  ]);
+  const removeMethod = (method: PaymentMethod) => Alert.alert('Remove payment method', 'This saved method will be removed from your account.', [
+    { text: 'Cancel', style: 'cancel' }, { text: 'Remove', style: 'destructive', onPress: async () => {
+      if (!token) return;
+      try { await deletePaymentMethod(token, method.id); await load(true); }
+      catch (e) { Alert.alert('Could not remove method', getApiMessage(e, 'Please try again.')); }
+    } },
+  ]);
+  const methodName = (method: PaymentMethod) => method.type === 'card' ? `${method.brand || 'Card'}${method.last4 ? ` •••• ${method.last4}` : ''}` : method.type.toUpperCase();
+  const amount = (paise: string | number) => `₹${(Number(paise) / 100).toFixed(2)}`;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -14,66 +51,34 @@ export default function WalletScreen() {
         <Text style={styles.headerTitle}>Payments</Text>
       </View>
 
-      <Animated.ScrollView entering={FadeIn.delay(100)} contentContainerStyle={styles.content}>
+      <Animated.ScrollView entering={FadeIn.delay(100)} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={Colors.accent} />}>
         
         {/* Transit Cash Banner */}
-        <View style={styles.transitCashCard}>
-          <View style={styles.cashTopRow}>
-            <View>
-              <Text style={styles.cashLabel}>Transit Credits</Text>
-              <Text style={styles.cashAmount}>₹ 200.00</Text>
-            </View>
-            <View style={styles.walletIconBox}>
-              <Ionicons name="wallet" size={24} color={Colors.surfacePrimary} />
-            </View>
-          </View>
-          <TouchableOpacity style={styles.cashBtn}>
-            <Text style={styles.cashBtnText}>Add funds</Text>
-          </TouchableOpacity>
-        </View>
-
         <Text style={styles.sectionLabel}>PAYMENT METHODS</Text>
         <View style={styles.methodsCard}>
-          
-          <TouchableOpacity style={styles.listItem}>
+          {loading ? <ActivityIndicator color={Colors.accent} style={{ padding: 20 }} /> : methods.length === 0 ? <Text style={styles.emptyText}>No saved payment methods</Text> : methods.map((method, index) => <React.Fragment key={method.id}>
+          {index > 0 && <View style={styles.divider} />}
+          <TouchableOpacity style={styles.listItem} onPress={() => chooseDefault(method)} onLongPress={() => removeMethod(method)}>
             <View style={styles.iconCircle}>
-              <Ionicons name="card" size={20} color={Colors.textSecondary} />
+              <Ionicons name={method.type === 'upi' ? 'qr-code' : 'card'} size={20} color={Colors.textSecondary} />
             </View>
             <View style={styles.listTextContent}>
-              <Text style={styles.listTitle}>Visa</Text>
-              <Text style={styles.listSubtitle}>•••• 4242</Text>
+              <Text style={styles.listTitle}>{methodName(method)}</Text>
+              <Text style={styles.listSubtitle}>{method.isDefault ? 'Default · Long press to remove' : 'Tap to set as default · Long press to remove'}</Text>
             </View>
-            <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+            {method.isDefault && <Ionicons name="checkmark-circle" size={20} color={Colors.success} />}
           </TouchableOpacity>
-
-          <View style={styles.divider} />
-
-          <TouchableOpacity style={styles.listItem}>
-            <View style={styles.iconCircle}>
-              <Ionicons name="layers" size={20} color={Colors.textSecondary} />
-            </View>
-            <View style={styles.listTextContent}>
-              <Text style={styles.listTitle}>UPI</Text>
-              <Text style={styles.listSubtitle}>example@upi</Text>
-            </View>
-          </TouchableOpacity>
-
+          </React.Fragment>)}
         </View>
-
-        <TouchableOpacity style={styles.addGhostBtn}>
-          <Ionicons name="add" size={20} color={Colors.accent} style={{ marginRight: 8 }} />
-          <Text style={styles.addGhostText}>Add payment method</Text>
-        </TouchableOpacity>
-
-        <Text style={[styles.sectionLabel, { marginTop: 32 }]}>BUSINESS ACCOUNTS</Text>
-        <TouchableOpacity style={styles.businessCard}>
-          <Ionicons name="briefcase-outline" size={24} color={Colors.textSecondary} style={{ marginRight: 16 }} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.listTitle}>Set up a business profile</Text>
-            <Text style={styles.listSubtitle}>Separate work and personal rides</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={16} color={Colors.textTertiary} />
-        </TouchableOpacity>
+        {error && <Text style={styles.errorText}>{error}</Text>}
+        <Text style={[styles.sectionLabel, { marginTop: 32 }]}>PAYMENT HISTORY</Text>
+        <View style={styles.methodsCard}>
+          {loading ? <ActivityIndicator color={Colors.accent} style={{ padding: 20 }} /> : history.length === 0 ? <Text style={styles.emptyText}>No payments yet</Text> : history.map((item, index) => <React.Fragment key={item.id}>{index > 0 && <View style={styles.divider} />}<View style={styles.listItem}>
+            <View style={styles.iconCircle}><Ionicons name="receipt-outline" size={20} color={Colors.textSecondary} /></View>
+            <View style={styles.listTextContent}><Text style={styles.listTitle}>{amount(item.amountPaise)}</Text><Text style={styles.listSubtitle}>{new Date(item.createdAt).toLocaleDateString()} · {item.status}</Text></View>
+            <Text style={styles.listSubtitle}>Ride</Text>
+          </View></React.Fragment>)}
+        </View>
 
       </Animated.ScrollView>
     </View>
@@ -162,6 +167,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderSubtle,
     overflow: 'hidden',
   },
+  emptyText: { color: Colors.textSecondary, fontFamily: 'JetBrainsMono_500Medium', fontSize: 13, padding: 18 },
+  errorText: { color: Colors.destructive, fontFamily: 'JetBrainsMono_500Medium', fontSize: 12, marginTop: 12 },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',

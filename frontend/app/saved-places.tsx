@@ -1,14 +1,35 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import { useAuthStore } from '@/store/auth';
+import { deleteSavedPlace, getApiMessage, getSavedPlaces, SavedPlace } from '@/lib/account';
 
 export default function SavedPlacesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const token = useAuthStore((state) => state.accessToken);
+  const [places, setPlaces] = React.useState<SavedPlace[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const load = React.useCallback(async () => {
+    if (!token) { setLoading(false); setError('Sign in to view saved places.'); return; }
+    setLoading(true); setError(null);
+    try { setPlaces(await getSavedPlaces(token)); }
+    catch (e) { setError(getApiMessage(e, 'Could not load saved places.')); }
+    finally { setLoading(false); }
+  }, [token]);
+  React.useEffect(() => { void load(); }, [load]);
+  const remove = (place: SavedPlace) => Alert.alert('Remove saved place', `Remove ${place.name} from your saved places?`, [
+    { text: 'Cancel', style: 'cancel' }, { text: 'Remove', style: 'destructive', onPress: async () => {
+      if (!token) return;
+      try { await deleteSavedPlace(token, place.id); await load(); }
+      catch (e) { Alert.alert('Could not remove place', getApiMessage(e, 'Please try again.')); }
+    } },
+  ]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -19,41 +40,23 @@ export default function SavedPlacesScreen() {
         <Text style={styles.headerTitle}>Saved Places</Text>
       </View>
 
-      <Animated.ScrollView entering={FadeIn.delay(100)} contentContainerStyle={styles.content}>
+        <Animated.ScrollView entering={FadeIn.delay(100)} contentContainerStyle={styles.content}>
         
         <Text style={styles.sectionLabel}>FAVORITES</Text>
         <View style={styles.favoritesCard}>
           
-          <TouchableOpacity style={styles.listItem}>
-            <View style={styles.iconCircle}>
-              <Ionicons name="home" size={20} color={Colors.textSecondary} />
-            </View>
-            <View style={styles.listTextContent}>
-              <Text style={styles.listTitle}>Home</Text>
-              <Text style={styles.listSubtitle}>A-41, Defence Colony, New Delhi</Text>
-            </View>
-            <Ionicons name="ellipsis-horizontal" size={20} color={Colors.textTertiary} />
-          </TouchableOpacity>
-
-          <View style={styles.divider} />
-
-          <TouchableOpacity style={styles.listItem}>
-            <View style={styles.iconCircle}>
-              <Ionicons name="briefcase" size={20} color={Colors.textSecondary} />
-            </View>
-            <View style={styles.listTextContent}>
-              <Text style={styles.listTitle}>Work</Text>
-              <Text style={styles.listSubtitle}>DLF Cyber City, Gurugram</Text>
-            </View>
-            <Ionicons name="ellipsis-horizontal" size={20} color={Colors.textTertiary} />
-          </TouchableOpacity>
+          {loading ? <ActivityIndicator color={Colors.accent} style={{ padding: 24 }} /> : places.length === 0 ? <Text style={styles.emptyText}>{error || 'No saved places yet'}</Text> : places.map((place, index) => <React.Fragment key={place.id}>
+            {index > 0 && <View style={styles.divider} />}
+            <TouchableOpacity style={styles.listItem} onLongPress={() => remove(place)}>
+              <View style={styles.iconCircle}><Ionicons name={place.name.toLowerCase() === 'home' ? 'home' : 'location'} size={20} color={Colors.textSecondary} /></View>
+              <View style={styles.listTextContent}><Text style={styles.listTitle}>{place.name}</Text><Text style={styles.listSubtitle}>{place.address}</Text></View>
+              <TouchableOpacity accessibilityLabel={`Remove ${place.name}`} onPress={() => remove(place)}><Ionicons name="ellipsis-horizontal" size={20} color={Colors.textTertiary} /></TouchableOpacity>
+            </TouchableOpacity>
+          </React.Fragment>)}
 
         </View>
 
-        <TouchableOpacity style={styles.addGhostBtn}>
-          <Ionicons name="add" size={20} color={Colors.accent} style={{ marginRight: 8 }} />
-          <Text style={styles.addGhostText}>Add saved place</Text>
-        </TouchableOpacity>
+        {error && places.length > 0 && <Text style={styles.emptyText}>{error}</Text>}
 
       </Animated.ScrollView>
     </View>
@@ -141,6 +144,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginLeft: 8,
   },
+  emptyText: { color: Colors.textSecondary, fontFamily: 'JetBrainsMono_500Medium', fontSize: 13, padding: 18 },
   addGhostText: {
     fontFamily: 'JetBrainsMono_500Medium',
     fontSize: 14,

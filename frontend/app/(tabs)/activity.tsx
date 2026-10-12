@@ -5,19 +5,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
-const FILTERS = ['All', 'This month', 'Last 3 months', 'EV Rides', 'Shared'];
-
-const MOCK_HISTORY = [
-  { id: '1', route: 'Cyber Hub → Saket', price: '₹192', date: '24 May · 12:34 PM', type: 'Transit EV', ev: true, saved: 'Saved ₹28 · Low demand' },
-  { id: '2', route: 'Airport T3 → Vasant Kunj', price: '₹340', date: '21 May · 08:15 AM', type: 'Transit Go', ev: false },
-  { id: '3', route: 'Connaught Place → Cyber Hub', price: '₹410', date: '18 May · 06:45 PM', type: 'Transit Comfort', ev: false },
-  { id: '4', route: 'GK II → Select Citywalk', price: '₹95', date: '12 May · 02:20 PM', type: 'Transit EV', ev: true, saved: 'Saved ₹14 · Low demand' },
-  { id: '5', route: 'Saket → Hauz Khas', price: '₹120', date: '04 May · 09:10 PM', type: 'Transit Share', ev: false },
-];
+const FILTERS = ['All'];
 
 const ItemSeparator = memo(() => <View style={{ height: 16 }} />);
 
-const RideCard = memo(({ item }: { item: typeof MOCK_HISTORY[number] }) => (
+type RideCardItem = { id: string; route: string; price: string; date: string; type: string; ev: boolean };
+const RideCard = memo(({ item }: { item: RideCardItem }) => (
   <Animated.View entering={FadeIn} style={styles.card}>
     <TouchableOpacity activeOpacity={0.8} style={styles.cardInner}>
       <View style={styles.cardTop}>
@@ -31,12 +24,6 @@ const RideCard = memo(({ item }: { item: typeof MOCK_HISTORY[number] }) => (
           <Text style={styles.typeText}>{item.type}</Text>
         </View>
       </View>
-      {item.saved && (
-        <View style={styles.savingsRow}>
-          <View style={styles.savingsTrack} />
-          <Text style={styles.savingsText}>{item.saved}</Text>
-        </View>
-      )}
     </TouchableOpacity>
   </Animated.View>
 ));
@@ -67,7 +54,7 @@ export default function ActivityScreen() {
   ), [activeFilter, handleFilterPress]);
 
   const filterKeyExtractor = useCallback((i: string) => i, []);
-  const historyKeyExtractor = useCallback((item: any) => item.id, []);
+  const historyKeyExtractor = useCallback((item: RideCardItem) => item.id, []);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -87,7 +74,7 @@ export default function ActivityScreen() {
       </View>
 
       <FlatList
-        data={MOCK_HISTORY}
+        data={[] as RideCardItem[]}
         keyExtractor={historyKeyExtractor}
         renderItem={renderRideCard}
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 100 }}
@@ -96,6 +83,7 @@ export default function ActivityScreen() {
         maxToRenderPerBatch={5}
         windowSize={5}
         removeClippedSubviews={true}
+        ListEmptyComponent={<View style={styles.emptyState}><Ionicons name="time-outline" size={30} color={Colors.textTertiary} /><Text style={styles.emptyTitle}>No ride history available</Text><Text style={styles.emptyMessage}>Ride history will appear here when it is available.</Text></View>}
       />
     </View>
   );
@@ -150,6 +138,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.borderSubtle,
   },
+  emptyState: { alignItems: 'center', paddingHorizontal: 24, paddingTop: 64 },
+  emptyTitle: { fontFamily: 'JetBrainsMono_500Medium', fontSize: 15, color: Colors.textPrimary, marginTop: 14 },
+  emptyMessage: { fontFamily: 'JetBrainsMono_500Medium', fontSize: 12, lineHeight: 18, color: Colors.textSecondary, textAlign: 'center', marginTop: 8 },
   cardInner: {
     padding: 16,
   },

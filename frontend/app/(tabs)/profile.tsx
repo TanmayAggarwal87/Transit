@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, Switch, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { Colors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,7 +11,6 @@ import { logout } from '@/lib/auth';
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [preferEV, setPreferEV] = React.useState(true);
   const user = useAuthStore((state) => state.user);
   const refreshToken = useAuthStore((state) => state.refreshToken);
   const clearSession = useAuthStore((state) => state.clearSession);
@@ -39,32 +38,7 @@ export default function ProfileScreen() {
             <Ionicons name="person" size={40} color={Colors.textTertiary} />
           </View>
           <Text style={styles.userName}>{user?.name}</Text>
-          <Text style={styles.userPhone}>+91 {user?.phone}</Text>
-          <View style={styles.ratingBadge}>
-            <Text style={styles.ratingBadgeText}>⭐ 4.94 · 52 trips</Text>
-          </View>
-        </View>
-
-        {/* Transit Intelligence Analytics Profile Banner */}
-        <View style={styles.insightCard}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-            <Ionicons name="sparkles" size={16} color={Colors.accent} style={{ marginRight: 8 }} />
-            <Text style={styles.insightHeader}>TRANSIT INTELLIGENCE</Text>
-          </View>
-          
-          <Text style={styles.insightHeadline}>{"You've saved ₹340 by riding in low-demand windows this month."}</Text>
-          
-          <View style={styles.evToggleRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.evToggleLabel}>Prefer EV when available</Text>
-            </View>
-            <Switch
-              trackColor={{ false: Colors.surfaceTertiary, true: 'rgba(0, 194, 255, 0.3)' }}
-              thumbColor={preferEV ? Colors.accent : Colors.textTertiary}
-              onValueChange={setPreferEV}
-              value={preferEV}
-            />
-          </View>
+          <Text style={styles.userPhone}>{user?.phone}</Text>
         </View>
 
         {/* Account Defaults */}
@@ -79,8 +53,7 @@ export default function ProfileScreen() {
         {/* Payments defaults */}
         <Text style={styles.sectionLabel}>PAYMENTS</Text>
         <View style={styles.menuGroup}>
-          <MenuItem icon="card-outline" title="Payment methods" value="Visa •••• 4242" onPress={() => router.navigate('/(tabs)/wallet')} />
-          <MenuItem icon="wallet-outline" title="Transit credits" value="₹200" valueColor={Colors.success} onPress={() => router.navigate('/(tabs)/wallet')} />
+          <MenuItem icon="card-outline" title="Payment methods" onPress={() => router.navigate('/(tabs)/wallet')} />
         </View>
 
         {/* Support */}
