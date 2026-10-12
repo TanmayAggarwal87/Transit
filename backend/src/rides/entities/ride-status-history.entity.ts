@@ -6,7 +6,8 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { Ride, RideStatus } from './ride.entity';
+import { Ride } from './ride.entity';
+import { RideStatus } from './ride-status.enum';
 
 @Entity('ride_status_history')
 export class RideStatusHistory {

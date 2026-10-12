@@ -80,6 +80,9 @@ export class Driver {
   @Column({ type: 'numeric', name: 'total_earnings', precision: 12, scale: 2, default: 0 })
   totalEarnings!: string;
 
+  @Column({ type: 'numeric', precision: 3, scale: 2, default: 0 })
+  rating!: string;
+
   @Column({ type: 'double precision', nullable: true })
   heading!: number | null;
 

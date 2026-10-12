@@ -36,6 +36,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { Payment } from './payments/entities/payment.entity';
 import { DriverEarning } from './payments/entities/driver-earning.entity';
 import { DriverPayout } from './payments/entities/driver-payout.entity';
+import { Rating } from './ratings/entities/rating.entity';
+import { RatingsModule } from './ratings/ratings.module';
 
 @Module({
   imports: [
@@ -84,6 +86,7 @@ import { DriverPayout } from './payments/entities/driver-payout.entity';
           Payment,
           DriverEarning,
           DriverPayout,
+          Rating,
         ],
         synchronize: true,
         ssl: true,
@@ -104,6 +107,7 @@ import { DriverPayout } from './payments/entities/driver-payout.entity';
     AdminModule,
     RidesModule,
     RealtimeModule,
+    RatingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

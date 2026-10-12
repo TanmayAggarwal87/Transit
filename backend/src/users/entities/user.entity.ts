@@ -21,6 +21,9 @@ export class User {
   @Column({ nullable: true })
   emergencyContact?: string;
 
+  @Column({ type: 'numeric', precision: 3, scale: 2, default: 0 })
+  rating!: string;
+
   @CreateDateColumn()
   createdAt!: Date;
 
