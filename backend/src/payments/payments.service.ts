@@ -20,6 +20,9 @@ import { DriverEarning, DriverEarningStatus } from './entities/driver-earning.en
 import { DriverPayout, DriverPayoutStatus } from './entities/driver-payout.entity';
 import { Payment, PaymentStatus } from './entities/payment.entity';
 import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
+import {
+  NotificationsService,
+} from '../notifications/notifications.service';
 
 const paiseFromRupees = (rupees: number): number => Math.round(rupees * 100);
 const toBigInt = (amount: string | number | null | undefined): bigint =>
@@ -56,6 +59,7 @@ export class PaymentsService {
     private readonly realtimeService: RealtimeService,
     private readonly dataSource: DataSource,
     private readonly configService: ConfigService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /** Create one server-owned Razorpay Order for a completed ride. Checkout is user-confirmed. */
@@ -312,6 +316,19 @@ export class PaymentsService {
       currency: completed.currency,
       status: completed.status,
     });
+    void this.notificationsService
+      .notifyUser(userId, {
+        type: 'payment_processed',
+        title: 'Payment receipt',
+        body: `Payment for your ride was received (${rupeesFromPaise(toBigInt(completed.amountPaise))} ${completed.currency}).`,
+        deepLink: `transit://rides/${rideId}/payment`,
+        data: { rideId, paymentId: completed.id },
+      })
+      .catch((error: unknown) => {
+        this.logger.warn(
+          `Could not notify rider about payment ${completed.id}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      });
     return this.toPublicPayment(completed);
   }
 

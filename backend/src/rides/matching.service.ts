@@ -14,6 +14,10 @@ import { RedisService } from 'src/redis/redis.service';
 import { EventsService } from 'src/kafka/events.service';
 import { KafkaTopic } from 'src/kafka/kafka.constants';
 import { RealtimeService } from 'src/realtime/realtime.service';
+import {
+  NotificationsService,
+  NotificationContent,
+} from '../notifications/notifications.service';
 
 export interface DriverMatchResult {
   driver: Driver;
@@ -34,6 +38,7 @@ export class MatchingService {
     private readonly redisService: RedisService,
     private readonly eventsService: EventsService,
     private readonly realtimeService: RealtimeService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -173,7 +178,10 @@ export class MatchingService {
     const savedRide = await this.rideRepository.save(ride);
 
     // Update driver status in DB & Redis
-    const driver = await this.driverRepository.findOne({ where: { id: driverId } });
+    const driver = await this.driverRepository.findOne({
+      where: { id: driverId },
+      relations: ['user'],
+    });
     if (driver) {
       driver.status = DriverStatus.ON_RIDE;
       await this.driverRepository.save(driver);
@@ -199,6 +207,24 @@ export class MatchingService {
       riderId: savedRide.riderId,
       status: savedRide.status,
     });
+
+    const driverName = driver?.user?.name || 'Your driver';
+    this.notifySafely(ride.riderId, {
+      type: 'ride_driver_assigned',
+      title: 'Driver assigned',
+      body: `${driverName} accepted your ride and is on the way.`,
+      deepLink: `transit://rides/${rideId}`,
+      data: { rideId },
+    });
+    if (driver?.userId) {
+      this.notifySafely(driver.userId, {
+        type: 'ride_pickup_nudge',
+        title: 'Head to pickup',
+        body: 'Navigate to the rider’s pickup location.',
+        deepLink: `transit://rides/${rideId}`,
+        data: { rideId },
+      });
+    }
 
     return savedRide;
   }
@@ -296,5 +322,13 @@ export class MatchingService {
       comment: comment || null,
     });
     return this.statusHistoryRepository.save(history);
+  }
+
+  private notifySafely(userId: string, content: NotificationContent): void {
+    void this.notificationsService.notifyUser(userId, content).catch((error: unknown) => {
+      this.logger.warn(
+        `Could not notify user ${userId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    });
   }
 }

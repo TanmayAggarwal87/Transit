@@ -10,12 +10,14 @@ import { RideStatusHistory } from './entities/ride-status-history.entity';
 import { Driver } from 'src/drivers/entities/driver.entity';
 import { DriversModule } from 'src/drivers/drivers.module';
 import { RealtimeModule } from 'src/realtime/realtime.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Ride, Fare, RideStatusHistory, Driver]),
     DriversModule,
     forwardRef(() => RealtimeModule),
+    NotificationsModule,
   ],
   controllers: [RidesController],
   providers: [RidesService, PricingService, MatchingService],

@@ -10,6 +10,7 @@ import { MatchingService } from './matching.service';
 import { RedisService } from 'src/redis/redis.service';
 import { EventsService } from 'src/kafka/events.service';
 import { KafkaTopic } from 'src/kafka/kafka.constants';
+import { NotificationsService } from 'src/notifications/notifications.service';
 
 describe('RidesService', () => {
   let service: RidesService;
@@ -58,6 +59,10 @@ describe('RidesService', () => {
         { provide: MatchingService, useValue: matchingService },
         { provide: RedisService, useValue: redisService },
         { provide: EventsService, useValue: eventsService },
+        {
+          provide: NotificationsService,
+          useValue: { notifyUser: jest.fn().mockResolvedValue(undefined) },
+        },
       ],
     }).compile();
 

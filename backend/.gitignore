@@ -3,6 +3,9 @@
 /node_modules
 /build
 
+# Commit the placeholder template while keeping real dotenv files ignored.
+!/.env.example
+
 # Logs
 logs
 *.log

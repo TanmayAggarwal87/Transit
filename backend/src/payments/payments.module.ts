@@ -13,6 +13,7 @@ import { Payment } from './entities/payment.entity';
 import { PaymentsController } from './payments.controller';
 import { PaymentsScheduler } from './payments.scheduler';
 import { PaymentsService } from './payments.service';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { PaymentsService } from './payments.service';
     PaymentMethodsModule,
     EventsModule,
     RealtimeModule,
+    NotificationsModule,
   ],
   controllers: [PaymentsController],
   providers: [PaymentsService, PaymentsScheduler],

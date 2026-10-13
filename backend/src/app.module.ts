@@ -38,6 +38,9 @@ import { DriverEarning } from './payments/entities/driver-earning.entity';
 import { DriverPayout } from './payments/entities/driver-payout.entity';
 import { Rating } from './ratings/entities/rating.entity';
 import { RatingsModule } from './ratings/ratings.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { InAppNotification } from './notifications/entities/in-app-notification.entity';
+import { DeviceToken } from './notifications/entities/device-token.entity';
 
 @Module({
   imports: [
@@ -87,6 +90,8 @@ import { RatingsModule } from './ratings/ratings.module';
           DriverEarning,
           DriverPayout,
           Rating,
+          InAppNotification,
+          DeviceToken,
         ],
         synchronize: true,
         ssl: true,
@@ -108,6 +113,7 @@ import { RatingsModule } from './ratings/ratings.module';
     RidesModule,
     RealtimeModule,
     RatingsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

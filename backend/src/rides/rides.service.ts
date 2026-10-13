@@ -18,6 +18,10 @@ import { MatchingService } from './matching.service';
 import { RedisService } from 'src/redis/redis.service';
 import { EventsService } from 'src/kafka/events.service';
 import { KafkaTopic } from 'src/kafka/kafka.constants';
+import {
+  NotificationsService,
+  NotificationContent,
+} from '../notifications/notifications.service';
 
 @Injectable()
 export class RidesService {
@@ -34,6 +38,7 @@ export class RidesService {
     private readonly matchingService: MatchingService,
     private readonly redisService: RedisService,
     private readonly eventsService: EventsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -188,6 +193,13 @@ export class RidesService {
       riderId: savedRide.riderId,
       status: savedRide.status,
     });
+    this.notifySafely(ride.riderId, {
+      type: 'ride_driver_arrived',
+      title: 'Your driver has arrived',
+      body: 'Your driver is at the pickup location.',
+      deepLink: `transit://rides/${rideId}`,
+      data: { rideId },
+    });
 
     return savedRide;
   }
@@ -231,6 +243,13 @@ export class RidesService {
       riderId: savedRide.riderId,
       tripStartedAt: savedRide.tripStartedAt,
       status: savedRide.status,
+    });
+    this.notifySafely(savedRide.riderId, {
+      type: 'ride_started',
+      title: 'Trip started',
+      body: 'Your trip is underway.',
+      deepLink: `transit://rides/${rideId}`,
+      data: { rideId },
     });
 
     return savedRide;
@@ -340,6 +359,20 @@ export class RidesService {
       tripCompletedAt: savedRide.tripCompletedAt,
       status: savedRide.status,
     });
+
+    const amount = savedRide.fare?.actualTotal;
+    const amountText = amount == null ? '' : ` · ₹${Number(amount).toFixed(2)}`;
+    const completionNotification: NotificationContent = {
+      type: 'ride_completed',
+      title: 'Trip complete',
+      body: `Your trip is complete${amountText}.`,
+      deepLink: `transit://rides/${rideId}`,
+      data: { rideId },
+    };
+    this.notifySafely(savedRide.riderId, completionNotification);
+    if (driver?.userId) {
+      this.notifySafely(driver.userId, completionNotification);
+    }
 
     return savedRide;
   }
@@ -468,5 +501,13 @@ export class RidesService {
     }
 
     return ride;
+  }
+
+  private notifySafely(userId: string, content: NotificationContent): void {
+    void this.notificationsService.notifyUser(userId, content).catch((error: unknown) => {
+      this.logger.warn(
+        `Could not notify user ${userId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    });
   }
 }
