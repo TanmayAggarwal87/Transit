@@ -43,6 +43,8 @@ import { InAppNotification } from './notifications/entities/in-app-notification.
 import { DeviceToken } from './notifications/entities/device-token.entity';
 import { SafetyModule } from './safety/safety.module';
 import { SosAlert } from './safety/entities/sos-alert.entity';
+import { HistoryModule } from './history/history.module';
+import { RideAnalytics } from './history/entities/ride-analytics.entity';
 
 @Module({
   imports: [
@@ -95,8 +97,10 @@ import { SosAlert } from './safety/entities/sos-alert.entity';
           InAppNotification,
           DeviceToken,
           SosAlert,
+          RideAnalytics,
         ],
-        synchronize: true,
+        // Apply schema changes through the migration CLI, never on app startup.
+        synchronize: false,
         ssl: true,
         extra: {
           ssl: {
@@ -118,6 +122,7 @@ import { SosAlert } from './safety/entities/sos-alert.entity';
     RatingsModule,
     NotificationsModule,
     SafetyModule,
+    HistoryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

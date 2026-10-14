@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   OneToOne,
   OneToMany,
+  Index,
 } from 'typeorm';
 import { Fare } from './fare.entity';
 import { RideStatusHistory } from './ride-status-history.entity';
@@ -14,6 +15,9 @@ import { RideStatus } from './ride-status.enum';
 export { RideStatus } from './ride-status.enum';
 
 @Entity('rides')
+@Index('idx_rides_rider_created', ['riderId', 'createdAt'])
+@Index('idx_rides_driver_created', ['driverId', 'createdAt'])
+@Index('idx_rides_rider_completed', ['riderId', 'tripCompletedAt'])
 export class Ride {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -58,16 +62,26 @@ export class Ride {
   @Column({ type: 'timestamp', name: 'trip_completed_at', nullable: true })
   tripCompletedAt!: Date | null;
 
-  @Column({ type: 'double precision', name: 'actual_distance_km', nullable: true })
+  @Column({
+    type: 'double precision',
+    name: 'actual_distance_km',
+    nullable: true,
+  })
   actualDistanceKm!: number | null;
 
-  @Column({ type: 'double precision', name: 'actual_duration_min', nullable: true })
+  @Column({
+    type: 'double precision',
+    name: 'actual_duration_min',
+    nullable: true,
+  })
   actualDurationMin!: number | null;
 
   @OneToOne(() => Fare, (fare) => fare.ride, { cascade: true })
   fare!: Fare;
 
-  @OneToMany(() => RideStatusHistory, (history) => history.ride, { cascade: true })
+  @OneToMany(() => RideStatusHistory, (history) => history.ride, {
+    cascade: true,
+  })
   statusHistory!: RideStatusHistory[];
 
   @CreateDateColumn()

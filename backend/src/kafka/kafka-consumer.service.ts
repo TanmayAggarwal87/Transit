@@ -29,7 +29,8 @@ export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
       this.configService.get<string>('KAFKA_BROKERS') || 'localhost:9092'
     ).split(',');
     const groupId =
-      this.configService.get<string>('KAFKA_GROUP_ID') || 'transit-backend-group';
+      this.configService.get<string>('KAFKA_GROUP_ID') ||
+      'transit-backend-group';
 
     this.kafka = new Kafka({
       clientId: 'transit-consumer',
@@ -80,7 +81,9 @@ export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
         await this.consumer.disconnect();
         this.logger.log('Kafka consumer disconnected');
       } catch (err: any) {
-        this.logger.error(`Error disconnecting Kafka consumer: ${err?.message || err}`);
+        this.logger.error(
+          `Error disconnecting Kafka consumer: ${err?.message || err}`,
+        );
       }
     }
   }
@@ -135,14 +138,20 @@ export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
         case KafkaTopic.RIDE_COMPLETED: {
           const rideId = data.rideId;
           if (rideId) {
-            this.logger.log(`[Kafka Consumer] Processing ride completion for ride ${rideId}`);
+            this.logger.log(
+              `[Kafka Consumer] Processing ride completion for ride ${rideId}`,
+            );
             this.realtimeService?.emitToRide(rideId, 'ride:completed', data);
             this.realtimeService?.emitToRide(rideId, 'ride:status_update', {
               rideId,
               status: data.status,
             });
-            await this.paymentsService.processRidePayment(rideId);
-            await this.analyticsService.writeAnalytics(rideId);
+            try {
+              await this.paymentsService.processRidePayment(rideId);
+            } finally {
+              // Payment provider failures must not suppress ride analytics.
+              await this.analyticsService.writeAnalytics(rideId);
+            }
           }
           break;
         }

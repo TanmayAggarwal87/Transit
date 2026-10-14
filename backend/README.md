@@ -96,3 +96,8 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## Backend feature documentation
+
+- [Phase 12: ride history, insights, metric definitions, and migration setup](docs/phase-12-history-analytics.md)
+- [Backend implementation decisions](DECISIONS.md)

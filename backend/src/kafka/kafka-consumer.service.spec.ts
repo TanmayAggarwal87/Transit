@@ -52,9 +52,14 @@ describe('KafkaConsumerService', () => {
         data: { rideId: 'ride-999', status: 'completed' },
       };
 
-      await service.handleMessage(KafkaTopic.RIDE_COMPLETED, JSON.stringify(payload));
+      await service.handleMessage(
+        KafkaTopic.RIDE_COMPLETED,
+        JSON.stringify(payload),
+      );
 
-      expect(paymentsService.processRidePayment).toHaveBeenCalledWith('ride-999');
+      expect(paymentsService.processRidePayment).toHaveBeenCalledWith(
+        'ride-999',
+      );
       expect(analyticsService.writeAnalytics).toHaveBeenCalledWith('ride-999');
     });
 
@@ -63,7 +68,12 @@ describe('KafkaConsumerService', () => {
         eventId: 'evt-2',
         timestamp: new Date().toISOString(),
         topic: KafkaTopic.DRIVER_LOCATION_UPDATED,
-        data: { driverId: 'driver-1', lat: 12.97, lng: 77.59, rideId: 'ride-999' },
+        data: {
+          driverId: 'driver-1',
+          lat: 12.97,
+          lng: 77.59,
+          rideId: 'ride-999',
+        },
       };
 
       await service.handleMessage(
@@ -73,6 +83,17 @@ describe('KafkaConsumerService', () => {
 
       // Should not throw and processes successfully
       expect(true).toBe(true);
+    });
+
+    it('still writes analytics if payment processing fails', async () => {
+      paymentsService.processRidePayment.mockRejectedValueOnce(
+        new Error('Payment provider unavailable'),
+      );
+      await service.handleMessage(
+        KafkaTopic.RIDE_COMPLETED,
+        JSON.stringify({ data: { rideId: 'ride-999' } }),
+      );
+      expect(analyticsService.writeAnalytics).toHaveBeenCalledWith('ride-999');
     });
   });
 });
