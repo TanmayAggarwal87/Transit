@@ -41,6 +41,8 @@ import { RatingsModule } from './ratings/ratings.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { InAppNotification } from './notifications/entities/in-app-notification.entity';
 import { DeviceToken } from './notifications/entities/device-token.entity';
+import { SafetyModule } from './safety/safety.module';
+import { SosAlert } from './safety/entities/sos-alert.entity';
 
 @Module({
   imports: [
@@ -92,6 +94,7 @@ import { DeviceToken } from './notifications/entities/device-token.entity';
           Rating,
           InAppNotification,
           DeviceToken,
+          SosAlert,
         ],
         synchronize: true,
         ssl: true,
@@ -114,6 +117,7 @@ import { DeviceToken } from './notifications/entities/device-token.entity';
     RealtimeModule,
     RatingsModule,
     NotificationsModule,
+    SafetyModule,
   ],
   controllers: [AppController],
   providers: [AppService],
