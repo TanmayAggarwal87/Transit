@@ -45,6 +45,8 @@ import { SafetyModule } from './safety/safety.module';
 import { SosAlert } from './safety/entities/sos-alert.entity';
 import { HistoryModule } from './history/history.module';
 import { RideAnalytics } from './history/entities/ride-analytics.entity';
+import { SupportModule } from './support/support.module';
+import { SupportTicket } from './support/entities/support-ticket.entity';
 
 @Module({
   imports: [
@@ -98,6 +100,7 @@ import { RideAnalytics } from './history/entities/ride-analytics.entity';
           DeviceToken,
           SosAlert,
           RideAnalytics,
+          SupportTicket,
         ],
         // Apply schema changes through the migration CLI, never on app startup.
         synchronize: false,
@@ -123,6 +126,7 @@ import { RideAnalytics } from './history/entities/ride-analytics.entity';
     NotificationsModule,
     SafetyModule,
     HistoryModule,
+    SupportModule,
   ],
   controllers: [AppController],
   providers: [AppService],
