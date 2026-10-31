@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EventsModule } from '../kafka/events.module';
 import { PaymentMethodsModule } from '../payment-methods/payment-methods.module';
+import { PaymentMethod } from '../payment-methods/entity/payment-method.entity';
 import { BankAccount } from '../drivers/entities/bank-account.entity';
 import { Driver } from '../drivers/entities/driver.entity';
 import { User } from '../users/entities/user.entity';
@@ -22,6 +23,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
       DriverEarning,
       DriverPayout,
       Ride,
+      PaymentMethod,
       BankAccount,
       Driver,
       User,

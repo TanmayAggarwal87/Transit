@@ -35,6 +35,9 @@ export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
     this.kafka = new Kafka({
       clientId: 'transit-consumer',
       brokers,
+      retry: {
+        retries: Number(this.configService.get('KAFKA_RETRIES', 2)),
+      },
     });
 
     this.consumer = this.kafka.consumer({ groupId });
@@ -44,6 +47,33 @@ export class KafkaConsumerService implements OnModuleInit, OnModuleDestroy {
     try {
       await this.consumer.connect();
       this.isConnected = true;
+
+      // shortcut: pre-create required topics so fresh Kafka brokers don't emit "does not host topic-partition" metadata errors
+      const admin = this.kafka.admin();
+      try {
+        await admin.connect();
+        const existingTopics = await admin.listTopics();
+        const requiredTopics = [
+          KafkaTopic.RIDE_COMPLETED,
+          KafkaTopic.RIDE_ACCEPTED,
+          KafkaTopic.RIDE_STARTED,
+          KafkaTopic.RIDE_CANCELLED,
+          KafkaTopic.RIDE_STATUS_UPDATED,
+          KafkaTopic.DRIVER_LOCATION_UPDATED,
+        ];
+        const missingTopics = requiredTopics
+          .filter((t) => !existingTopics.includes(t))
+          .map((topic) => ({ topic, numPartitions: 3, replicationFactor: 1 }));
+        if (missingTopics.length > 0) {
+          await admin.createTopics({ topics: missingTopics, waitForLeaders: true });
+        }
+      } catch (adminErr: any) {
+        this.logger.debug(
+          `Kafka topic initialization note: ${adminErr?.message || adminErr}`,
+        );
+      } finally {
+        await admin.disconnect().catch(() => {});
+      }
 
       await this.consumer.subscribe({
         topics: [

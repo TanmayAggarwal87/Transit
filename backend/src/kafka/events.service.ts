@@ -26,6 +26,9 @@ export class EventsService implements OnModuleInit, OnModuleDestroy {
     this.kafka = new Kafka({
       clientId,
       brokers,
+      retry: {
+        retries: Number(this.configService.get('KAFKA_RETRIES', 2)),
+      },
     });
 
     this.producer = this.kafka.producer({

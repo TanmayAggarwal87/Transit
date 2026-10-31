@@ -75,42 +75,53 @@ import { SupportTicket } from './support/entities/support-ticket.entity';
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        url: configService.get('DB_URL'),
-        entities: [
-          User,
-          RefreshToken,
-          Driver,
-          Vehicle,
-          DriverDocument,
-          VehicleDocument,
-          BankAccount,
-          SavedPlace,
-          PaymentMethod,
-          Ride,
-          Fare,
-          RideStatusHistory,
-          DriverLocationHistory,
-          Payment,
-          DriverEarning,
-          DriverPayout,
-          Rating,
-          InAppNotification,
-          DeviceToken,
-          SosAlert,
-          RideAnalytics,
-          SupportTicket,
-        ],
-        // Apply schema changes through the migration CLI, never on app startup.
-        synchronize: false,
-        ssl: true,
-        extra: {
-          ssl: {
-            rejectUnauthorized: false,
-          },
-        },
-      }),
+      useFactory: (configService: ConfigService) => {
+        const dbUrl = configService.get<string>('DB_URL', '');
+        const isSsl =
+          configService.get<string>('DB_SSL') === 'true' ||
+          dbUrl.includes('ssl=true') ||
+          dbUrl.includes('supabase') ||
+          dbUrl.includes('sslmode=require');
+
+        return {
+          type: 'postgres',
+          url: dbUrl,
+          entities: [
+            User,
+            RefreshToken,
+            Driver,
+            Vehicle,
+            DriverDocument,
+            VehicleDocument,
+            BankAccount,
+            SavedPlace,
+            PaymentMethod,
+            Ride,
+            Fare,
+            RideStatusHistory,
+            DriverLocationHistory,
+            Payment,
+            DriverEarning,
+            DriverPayout,
+            Rating,
+            InAppNotification,
+            DeviceToken,
+            SosAlert,
+            RideAnalytics,
+            SupportTicket,
+          ],
+          // Apply schema changes through the migration CLI, never on app startup.
+          synchronize: false,
+          ssl: isSsl,
+          extra: isSsl
+            ? {
+                ssl: {
+                  rejectUnauthorized: false,
+                },
+              }
+            : undefined,
+        };
+      },
     }),
     StorageModule,
     AuthModule,

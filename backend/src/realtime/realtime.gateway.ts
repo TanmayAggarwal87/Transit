@@ -87,8 +87,13 @@ export class RealtimeGateway
 
     try {
       await Promise.all([this.pubClient.connect(), this.subClient.connect()]);
-      server.adapter(createAdapter(this.pubClient, this.subClient));
-      this.logger.log('Socket.IO Redis adapter connected');
+      const rootServer = (server as any).server ?? server;
+      if (typeof rootServer.adapter === 'function') {
+        rootServer.adapter(createAdapter(this.pubClient, this.subClient));
+        this.logger.log('Socket.IO Redis adapter connected');
+      } else {
+        this.logger.warn('Socket.IO root server adapter function unavailable');
+      }
     } catch (error) {
       this.logger.error(
         `Socket.IO Redis adapter unavailable; this instance will use local rooms: ${(error as Error).message}`,

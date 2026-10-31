@@ -7,10 +7,11 @@ class Settings:
     app_env: str = os.getenv("APP_ENV", "development")
     port: int = int(os.getenv("PORT", "8000"))
 
-    # Convert standard postgresql:// connection string to asyncpg dialect if needed
-    raw_db_url: str = os.getenv(
-        "DATABASE_URL",
-        os.getenv("DB_URL", "postgresql+asyncpg://postgres:test1234@localhost:5432/Transit"),
+    # Read DATABASE_URL or DB_URL directly from env (shared with backend/.env)
+    raw_db_url: str = (
+        os.getenv("DATABASE_URL")
+        or os.getenv("DB_URL")
+        or "postgresql+asyncpg://localhost:5432/Transit"
     )
 
     redis_host: str = os.getenv("REDIS_HOST", "localhost")

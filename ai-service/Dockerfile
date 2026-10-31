@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.15
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install --no-cache-dir poetry
 
 COPY pyproject.toml poetry.lock* ./
-RUN poetry install --no-root --no-interaction --no-ansi
+RUN poetry install
 
 COPY . .
 

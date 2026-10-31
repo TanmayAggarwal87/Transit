@@ -9,6 +9,6 @@ import { PaymentMethodsController } from './payment-methods.controller';
   imports: [TypeOrmModule.forFeature([PaymentMethod])],
   controllers: [PaymentMethodsController],
   providers: [PaymentMethodsService, PaymentGatewayService],
-  exports: [PaymentMethodsService, PaymentGatewayService],
+  exports: [PaymentMethodsService, PaymentGatewayService, TypeOrmModule],
 })
 export class PaymentMethodsModule {}
